@@ -1,10 +1,21 @@
-from django.urls import path
-from .views import UserRegistrationView, ProtectedTestView
+# backend/accounts/urls.py (FINAL STRUCTURE with DRF Router)
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter 
+from .views import UserRegistrationView, ProtectedTestView, CourseViewSet # 🛑 CRITICAL: Import the new ViewSet
+
+# Create a router instance
+router = DefaultRouter()
+# Register the CourseViewSet: This creates paths like /api/courses/
+router.register(r'courses', CourseViewSet, basename='course') 
+
 
 urlpatterns = [
-    # Handles new user registration (We will define this view next)
+    # Static Paths (Used by AuthContext)
     path('register/', UserRegistrationView.as_view(), name='register'),
+    path('test/', ProtectedTestView.as_view(), name='test_authentication'), 
     
-    # Test route: Only accessible if a valid JWT is provided
-    path('test/', ProtectedTestView.as_view(), name='protected_test'),
+    # Dynamic Paths (For the CGPA Data)
+    # Includes all router URLs (e.g., /api/courses/)
+    path('', include(router.urls)),
 ]

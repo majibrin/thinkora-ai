@@ -1,39 +1,44 @@
-// frontend/src/App.jsx
+// frontend/src/App.jsx (CONSOLIDATED & CORRECTED VERSION)
 
 import React from 'react';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import AuthForm from './components/AuthForm.jsx';
+import Dashboard from './components/Dashboard.jsx';
 
+// The main App component containing the Router and all application logic.
+// This component must be rendered *inside* AuthProvider (done in main.jsx).
 function App() {
-  const { user, isAuthenticated, logout } = useAuth();
+  // 🛑 FIX: useAuth is now called directly inside the main App component,
+  // which is correctly placed within the <AuthProvider> in main.jsx.
+  const { user, isAuthenticated, logout } = useAuth(); 
+
+  // Optional: If you need to access 'logout', you should expose it through the useAuth hook,
+  // but it's not strictly necessary for routing here.
 
   return (
-    <div className="App" style={{ textAlign: 'center', padding: '20px' }}>
-      <header>
-        <h1>Thinkora</h1>
-      </header>
+    <Router>
+      <div className="App" style={{ textAlign: 'center', padding: '20px' }}>
+        <header>
+          <h1>Thinkora</h1>
+        </header>
 
-      {isAuthenticated ? (
-        // --- AUTHENTICATED VIEW ---
-        <div className="protected-container">
-          <h2>
-            Welcome, <span className="username" title={user.username}>{user.username}</span>!
-          </h2>
-          <p>
-            Email: <span className="user-email" title={user.email}>{user.email}</span>
-          </p>
-          <p>You have successfully connected the React Frontend to the secured Django Backend.</p>
-          <p>This is a protected view, accessible only with a valid JWT.</p>
-          <button onClick={logout} className="logout-button">
-            Logout
-          </button>
-        </div>
-      ) : (
-        // --- UNAUTHENTICATED VIEW ---
-        <AuthForm />
-      )}
-    </div>
+        <Routes>
+          <Route
+            path="/"
+            // Renders Dashboard if authenticated, otherwise redirects to /login
+            element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/login"
+            // Redirects to Dashboard if already logged in
+            element={isAuthenticated ? <Navigate to="/" /> : <AuthForm />}
+          />
+          <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

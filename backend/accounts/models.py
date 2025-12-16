@@ -1,16 +1,36 @@
-from django.contrib.auth.models import AbstractUser
+# backend/accounts/models.py (FINAL VERSION - LOGIN FIX INCLUDED)
+
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
-# Define the custom user model that inherits from AbstractUser
+# --- Existing Custom User Model (FIXED) ---
 class User(AbstractUser):
-    # Override the email field to make it unique and required for login
+    # Overriding the default AbstractUser email field to ensure it is unique
     email = models.EmailField(unique=True)
-
-    # Tell Django to use the 'email' field instead of 'username' for login
+    
+    # 🛑 CRITICAL FIX 1: This tells Django to use 'email' for the login field
     USERNAME_FIELD = 'email'
+    
+    # 🛑 CRITICAL FIX 2: This lists the fields required when creating a superuser (must NOT contain 'email')
+    REQUIRED_FIELDS = ['username'] 
+    
+    # NOTE: You can remove the 'pass' line when you add these fields.
 
-    # Keep 'username' as a required field during superuser creation, etc.
-    REQUIRED_FIELDS = ['username']
+    # --- NEW MODEL FOR GPA/AI DATA ---
+class Course(models.Model):
+    # Links the course to the user who entered it
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses')
+
+    # Core course data fields
+    course_name = models.CharField(max_length=100)
+    credits = models.DecimalField(max_digits=3, decimal_places=1) # e.g., 3.0, 4.5
+    letter_grade = models.CharField(max_length=2) # e.g., 'A', 'B+', 'C'
+
+    # Optional field for AI Training (e.g., Semester/Year)
+    semester_year = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
-        return self.email
+        return f"{self.user.username}'s Course: {self.course_name} ({self.letter_grade})"
+
+    class Meta:
+        ordering = ['course_name']

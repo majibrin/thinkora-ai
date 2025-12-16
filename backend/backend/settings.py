@@ -43,6 +43,13 @@ MIDDLEWARE = [
 
 # ALLOW ALL ORIGINS
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
@@ -75,7 +82,7 @@ DATABASES = {
 AUTH_USER_MODEL = 'accounts.User'
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Etc/GMT"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'

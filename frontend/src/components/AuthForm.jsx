@@ -1,7 +1,9 @@
 // frontend/src/components/AuthForm.jsx
 
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext.jsx'; // <-- FIXED: Now imports .jsx
+import { useNavigate } from 'react-router-dom'; // 🛑 NEW: Import useNavigate
+import { useAuth } from '../context/AuthContext.jsx';
+// NOTE: Assuming this path is correct for your custom registration service
 import { registerUser } from '../services/authService.js';
 
 function AuthForm() {
@@ -12,40 +14,74 @@ function AuthForm() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login } = useAuth(); 
+  // 🛑 NEW: Initialize the navigate hook
+  const navigate = useNavigate(); 
+  
+  // Destructure the function from your context
+  const { login, register } = useAuth(); // Assuming 'register' is also available in useAuth
 
   const handleSubmit = async (e) => {
+    // 🛑 CRITICAL FIX: Stops the default page reload
     e.preventDefault();
     setMessage('');
     setIsSubmitting(true);
 
     if (isLogin) {
-      // --- LOGIN LOGIC ---
-      const result = await login({ email, password, username });
-      if (result.success) {
+      // --- LOGIN LOGIC (Correctly using try...catch for thrown errors) ---
+      try {
+        // The context's login function takes (email, password) and throws on failure
+        await login(email, password);
+
+        // If the code reaches here, login was successful
         setMessage('Login successful! Redirecting...');
-      } else {
-        setMessage(`Login Failed: ${result.error?.detail || 'Check credentials'}`);
+        
+        // 🛑 NEW: Add the redirection command after a short delay
+        setTimeout(() => {
+            navigate('/'); // Redirect to the home page or dashboard
+        }, 500); 
+
+      } catch (error) {
+        // This catches the error object thrown from AuthContext (e.g., "Login failed")
+        console.error("Login Error:", error);
+        // Ensure you are using the correct error property, which we found was `message` in a previous step
+        setMessage(`Login Failed: ${error.message || 'Check credentials'}`);
+
       }
     } else {
       // --- REGISTRATION LOGIC ---
       try {
+        // Option B: Keep using external service if necessary (current code structure)
         await registerUser({ email, username, password });
+
         setMessage('Registration successful! Please log in.');
-        setIsLogin(true); 
+        setIsLogin(true);
+
       } catch (error) {
-        const errorData = error.response?.data;
-        const errorMessage = errorData 
-          ? Object.entries(errorData).map(([key, value]) => `${key}: ${value}`).join('; ')
-          : 'Registration failed.';
+        // Handle external registration service errors (e.g., Axios/fetch response objects)
+        const errorData = error.response?.data || (error instanceof Error ? null : error);
+        let errorMessage = 'Registration failed.';
+
+        if (errorData) {
+            errorMessage = Object.entries(errorData)
+                .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                .join('; ');
+        } else if (error.message) {
+             errorMessage = error.message;
+        }
+
+        console.error("Registration Error:", error);
         setMessage(errorMessage);
       }
     }
+
+    // GUARANTEE the loading state is turned OFF
+    // Note: Delaying this slightly in the success case for better UX might be helpful, 
+    // but keeping it here ensures the button is released quickly.
     setIsSubmitting(false);
   };
 
   const formTitle = isLogin ? 'Login' : 'Register';
-  const submitButtonText = isSubmitting 
+  const submitButtonText = isSubmitting
     ? (isLogin ? 'Logging In...' : 'Registering...')
     : formTitle;
 
@@ -55,21 +91,21 @@ function AuthForm() {
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
           <label>Email:</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
           />
         </div>
         {!isLogin && (
           <div style={{ marginBottom: '10px' }}>
             <label>Username:</label>
-            <input 
-              type="text" 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required={!isLogin}
               style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
             />
@@ -77,15 +113,15 @@ function AuthForm() {
         )}
         <div style={{ marginBottom: '20px' }}>
           <label>Password:</label>
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
           />
         </div>
-        
+
         <button type="submit" disabled={isSubmitting} style={{ padding: '10px 15px', width: '100%', background: isSubmitting ? '#ccc' : 'blue', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           {submitButtonText}
         </button>

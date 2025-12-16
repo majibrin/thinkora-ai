@@ -1,17 +1,23 @@
+# backend/accounts/serializers.py (FINAL COMPLETE VERSION)
+
 from rest_framework import serializers
-from .models import User
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer # Needed for login fix
+from .models import User, Course # CRITICAL: Import both models
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+# --- 1. Custom Login Serializer (FIXES 400 BAD REQUEST on /api/token/) ---
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    # This ensures that when the frontend sends the 'email' for login, 
+    # it is correctly validated by the base Simple JWT class.
+    def validate(self, attrs):
+        # Move 'email' from request to 'username' field for base serializer validation
+        attrs['username'] = attrs.get('email')
+        return super().validate(attrs)
+
+# --- 2. Course Data Serializer (For CGPA API) ---
+class CourseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('email', 'username', 'password')
-        extra_kwargs = {'password': {'write_only': True}}
-
-    # Override the create method to correctly hash the password
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            password=validated_data['password']
-        )
-        return user
+        model = Course
+        # fields list includes all necessary data fields plus 'id'
+        # 'user' is included but set to read-only, as the ViewSet handles setting it automatically.
+        fields = ['id', 'user', 'course_name', 'credits', 'letter_grade', 'semester_year']
+        read_only_fields = ['user']

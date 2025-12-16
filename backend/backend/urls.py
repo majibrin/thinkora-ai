@@ -1,21 +1,20 @@
+# backend/backend/urls.py (Reverting and Confirming Paths)
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,  # Handles login and returns access/refresh tokens
-    TokenRefreshView,    # Handles token renewal
+    TokenObtainPairView,
+    TokenRefreshView,
 )
 
 urlpatterns = [
-    # Admin Interface
     path('admin/', admin.site.urls),
-
-    # JWT Authentication Endpoints
-    # POST to /api/token/ returns access and refresh tokens
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     
-    # POST to /api/token/refresh/ returns a new access token
+    # 1. JWT token generation/refresh: Must be at the base /api/
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
-    # User Registration and Profile APIs (We will create this next)
-    path('api/accounts/', include('accounts.urls')),
+    
+    # 2. Accounts app base path (must be correct for the 404 fix)
+    # The frontend was requesting /api/auth/test/. Let's ensure this works.
+    # If the tokens above work, this path is the source of the 404 fix:
+    path('api/', include('accounts.urls')), 
 ]
