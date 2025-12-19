@@ -18,3 +18,4 @@ python-dotenv==1.0.1
 # Production
 whitenoise==6.6.0        # Static files
 gunicorn==21.2.0         # Production server
+djoser==2.1.0
