@@ -8,3 +8,5 @@ gunicorn==21.2.0
 dj-database-url==2.1.0
 psycopg2-binary==2.9.9
 djoser==2.2.0
+setuptools==70.3.0
+setuptools==70.3.0
