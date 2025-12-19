@@ -111,9 +111,20 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# ==================== STATIC FILES (CSS, JavaScript, Images) ====================
-STATIC_URL = '/static/'
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = 'static/'
+
+# The absolute path to the directory where collectstatic will collect static files for deployment.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Optional: Extra places for collectstatic to find static files.
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# For production, make sure WhiteNoise is configured
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # CRITICAL FIX: Use Django's default storage temporarily
 # Comment out WhiteNoise storage for now - re-enable after successful deployment
