@@ -115,7 +115,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'staticfiles'),
+    os.path.join(BASE_DIR, 'static'),
 ]
 # Use Django's default storage for now to avoid WhiteNoise issues
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
