@@ -1,0 +1,41 @@
+.protected-container {
+  border: 2px solid green;
+  padding: 30px;
+  margin: 20px auto;
+  max-width: 600px;
+  border-radius: 10px;
+}
+
+.logout-button {
+  padding: 10px 20px;
+  background: darkred;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+/* Truncate long text */
+.username,
+.user-email {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* Responsive for small screens */
+@media (max-width: 480px) {
+  .protected-container {
+    max-width: 90%;
+    padding: 20px;
+  }
+
+  .username,
+  .user-email {
+    font-size: 0.9rem;
+  }
+}
