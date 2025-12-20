@@ -1,16 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "vite",
+  "version": 2,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "env": {
-    "VITE_API_BASE_URL": {
-      "production": "https://thinkora-backend.onrender.com/api",
-      "development": "http://localhost:8000/api"
-    }
-  }
+  ]
 }
