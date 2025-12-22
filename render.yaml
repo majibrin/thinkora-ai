@@ -1,11 +1,10 @@
 services:
   - type: web
-    name: thinkora-backend
+    name: thinkora-backend-new      # Use a NEW name to avoid “name already in use”
     runtime: python
-    # CRITICAL: This tells Render your code is in the /backend subfolder
+    pythonVersion: 3.11             # <-- Must add this
     rootDir: backend
-    # Now these paths are relative to the /backend folder
-    buildCommand: "./build.sh"
+    buildCommand: "pip install -r requirements.txt"  # safer than ./build.sh
     startCommand: "gunicorn backend.wsgi:application"
     envVars:
       - key: DATABASE_URL
@@ -13,11 +12,11 @@ services:
           name: thinkora-db
           property: connectionString
       - key: DJANGO_SECRET_KEY
-        generateValue: true
+        value: "at9zAHBiqQkST52F0l4xpV4iMuN9tecc26FFBaLYbxBcG1Hj48e7Dw8Z7k4KwtapxPg"
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "thinkora-backend.onrender.com,localhost,127.0.0.1"
+        value: "thinkora-backend-new.onrender.com,localhost,127.0.0.1"
 
 databases:
   - name: thinkora-db
