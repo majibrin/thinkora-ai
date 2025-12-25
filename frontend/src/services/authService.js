@@ -9,54 +9,50 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Automatically attach token if present
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers['Authorization'] = `Bearer ${token}`;
+  return config;
+});
+
 const authService = {
-  // LOGIN with email + password
   login: async ({ email, password }) => {
-    const response = await api.post('/token/', { email, password });
-    const { access, refresh, user } = response.data; // backend must return user object {email, username}
+    const res = await api.post('/token/', { email, password });
+    const { access, user } = res.data;
 
-    // Store tokens
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
+    // Save token & user
+    localStorage.setItem('token', access);
+    localStorage.setItem('user', JSON.stringify(user || { email, username: '' }));
 
-    // Minimal user object
-    const currentUser = user || { email, username: '' };
-    localStorage.setItem('user', JSON.stringify(currentUser));
-
-    return currentUser;
+    return user || { email, username: '' };
   },
 
-  // REGISTER new user
   register: async ({ username, email, password }) => {
-    const response = await api.post('/register/', { username, email, password });
+    await api.post('/register/', { username, email, password });
     // Auto-login after registration
     return await authService.login({ email, password });
   },
 
-  // LOGOUT
   logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
 
-  // GET CURRENT USER
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },
 
-  // AUTH CHECK
-  isAuthenticated: () => !!localStorage.getItem('access_token'),
+  isAuthenticated: () => !!localStorage.getItem('token'),
 
-  // REFRESH TOKEN
   refreshToken: async () => {
     const refresh = localStorage.getItem('refresh_token');
-    if (!refresh) throw new Error('No refresh token');
+    if (!refresh) throw new Error('No refresh token stored');
 
-    const response = await api.post('/token/refresh/', { refresh });
-    const { access } = response.data;
-    localStorage.setItem('access_token', access);
+    const res = await api.post('/token/refresh/', { refresh });
+    const { access } = res.data;
+    localStorage.setItem('token', access);
     return access;
   },
 };

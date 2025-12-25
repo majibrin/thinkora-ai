@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import authService from '../services/authService';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
@@ -11,49 +11,52 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(authService.getCurrentUser());
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // Sync axios auth header
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      setUser(authService.getCurrentUser());
+    if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    else delete axios.defaults.headers.common['Authorization'];
+  }, [token]);
+
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = async (credentials) => {
-    try {
-      const currentUser = await authService.login(credentials);
-      setUser(currentUser);
-      return { success: true, user: currentUser };
-    } catch (err) {
-      throw err;
-    }
+  const login = async ({ email, password }) => {
+    const res = await axios.post(`${API_URL}/token/`, { email, password });
+    const { access, user } = res.data;
+    localStorage.setItem('token', access);
+    localStorage.setItem('user', JSON.stringify(user));
+    setToken(access);
+    setUser(user);
+    return user;
   };
 
-  const register = async (userData) => {
-    try {
-      const currentUser = await authService.register(userData);
-      setUser(currentUser);
-      return { success: true, user: currentUser };
-    } catch (err) {
-      throw err;
-    }
+  const register = async ({ username, email, password }) => {
+    await axios.post(`${API_URL}/register/`, { username, email, password });
+    // Auto-login after registration
+    return await login({ email, password });
   };
 
   const logout = () => {
-    authService.logout();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
     setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
   };
 
-  const value = {
-    user,
-    loading,
-    isAuthenticated: !!user,
-    login,
-    register,
-    logout,
-  };
+  const value = { user, token, login, register, logout, isAuthenticated: !!user };
 
   if (loading) {
     return (
@@ -61,10 +64,11 @@ export const AuthProvider = ({ children }) => {
         height: '100vh',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        flexDirection: 'column'
       }}>
         <img src="/favicon.ico" alt="Loading..." style={{ width: 64, height: 64 }} />
-        <span style={{ marginLeft: 10 }}>Loading Thinkora...</span>
+        <span style={{ marginTop: 10 }}>Loading Thinkora...</span>
       </div>
     );
   }

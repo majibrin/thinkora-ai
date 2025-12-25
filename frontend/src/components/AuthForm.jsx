@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './AuthForm.css';
+import loader from '../assets/loader.png';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -41,7 +42,6 @@ const AuthForm = ({ onAuthSuccess }) => {
           email: formData.email,
           password: formData.password
         });
-        // Auto-login after registration
         const loginRes = await axios.post(`${API_URL}/token/`, {
           email: formData.email,
           password: formData.password
@@ -62,6 +62,7 @@ const AuthForm = ({ onAuthSuccess }) => {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <img src={loader} alt="Thinkora Logo" className="auth-logo" />
         <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
         {error && <div className="auth-error">{error}</div>}
 

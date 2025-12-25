@@ -8,6 +8,8 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from .models import User, Course, ChatMessage
 from .serializers import CourseSerializer
+import uuid
+import re
 
 # -------------------------------
 # SERIALIZERS
@@ -130,13 +132,14 @@ def calculate_gpa_endpoint(request):
         return Response({'error': str(e)}, status=500)
 
 # -------------------------------
-# CHAT ENDPOINT
+# CHAT ENDPOINT (PER USER / SESSION)
 # -------------------------------
 @api_view(['POST'])
 def chat_message(request):
     try:
         user_message = request.data.get('message','').strip()
         context = request.data.get('context','student')
+        session_id = request.data.get('session_id') or str(uuid.uuid4())
 
         if not user_message:
             return Response({'error':'Message empty'}, status=400)
@@ -144,39 +147,39 @@ def chat_message(request):
         if request.user.is_authenticated:
             user = request.user
         else:
+            # Use session_id as pseudo-user key for guests
             user, created = User.objects.get_or_create(
-                username='demo_user',
-                defaults={'email':'demo@thinkora.com'}
+                username=f"guest_{session_id[:8]}",
+                defaults={'email': f"{session_id}@thinkora.com"}
             )
 
         # Save user message
         user_msg = ChatMessage.objects.create(
             user=user,
-            conversation_id='main',
+            conversation_id=session_id,
             role='user',
             content=user_message,
             context=context
         )
 
-        # GPA detection in chat
-        import re
+        # GPA detection
+        reply = f"I understand: '{user_message}'. How can I assist you today?"
         if 'gpa' in user_message.lower() or 'cgpa' in user_message.lower():
             pattern = r'([A-F])\s*=\s*(\d+)'
             matches = re.findall(pattern, user_message, re.IGNORECASE)
             if matches:
                 grade_points = {'A':5.0,'B':4.0,'C':3.0,'D':2.0,'E':1.0,'F':0.0}
-                total_points = 0
-                total_credits = 0
+                total_points = total_credits = 0
                 grade_list = []
                 for grade, credit in matches:
                     grade_upper = grade.upper()
+                    credit_float = float(credit)
                     if grade_upper in grade_points:
-                        credit_float = float(credit)
                         total_points += grade_points[grade_upper]*credit_float
                         total_credits += credit_float
                         grade_list.append(f"{grade_upper}={credit_float}")
                 if total_credits > 0:
-                    gpa = total_points / total_credits
+                    gpa = total_points/total_credits
                     if gpa>=4.50: classification="First Class 🥇"
                     elif gpa>=3.50: classification="Second Class Upper 🥈"
                     elif gpa>=2.50: classification="Second Class Lower 🥉"
@@ -186,40 +189,48 @@ def chat_message(request):
                     reply = f"📊 GPA CALCULATION (5.00 Scale):\nGrades: {', '.join(grade_list)}\nTotal Credits: {total_credits}\nGPA: {gpa:.2f}/5.00\nClassification: {classification}\nUse the GPA Calculator tool for more courses!"
                 else:
                     reply = "I couldn't calculate. Use format: A=5, B=4, C=3, D=2, E=1, F=0"
-            else:
-                reply = "📚 GPA Calculator: Send 'Calculate GPA: A=3, B=4, C=2'"
-        else:
-            # Basic AI response
-            reply = f"I understand: '{user_message}'. How can I assist you today?"
 
+        # Save AI response
         ai_msg = ChatMessage.objects.create(
             user=user,
-            conversation_id='main',
+            conversation_id=session_id,
             role='ai',
             content=reply,
             context=context
         )
 
-        return Response({'success': True, 'reply': reply, 'message_id': ai_msg.id, 'timestamp': ai_msg.created_at.isoformat()})
+        return Response({'success': True, 'reply': reply, 'session_id': session_id, 'message_id': ai_msg.id, 'timestamp': ai_msg.created_at.isoformat()})
 
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 
 # -------------------------------
-# CHAT HISTORY
+# CHAT HISTORY PER USER / SESSION
 # -------------------------------
 @api_view(['GET'])
 def get_chat_history(request):
     try:
+        session_id = request.query_params.get('session_id')
         if request.user.is_authenticated:
             user = request.user
+            conv_id = None  # use per-user conversation
+        elif session_id:
+            user = User.objects.filter(username__startswith=f"guest_{session_id[:8]}").first()
+            conv_id = session_id
         else:
-            user = User.objects.get(username='demo_user')
+            return Response({'success': True, 'history':[]})
 
-        messages = ChatMessage.objects.filter(user=user).order_by('created_at')[:50]
+        if not user:
+            return Response({'success': True, 'history':[]})
+
+        messages = ChatMessage.objects.filter(user=user)
+        if conv_id:
+            messages = messages.filter(conversation_id=conv_id)
+        messages = messages.order_by('created_at')[:50]
+
         history = [{'id':msg.id,'sender':msg.role,'text':msg.content,'time':msg.created_at.isoformat(),'context':msg.context} for msg in messages]
 
-        return Response({'success': True,'history':history})
+        return Response({'success': True, 'history': history})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 

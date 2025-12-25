@@ -1,51 +1,19 @@
-/* Layout - Fixed to Device Height */
+/* Full Height Layout */
 .dashboard-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for mobile */
+  overflow: hidden;
   font-family: sans-serif;
   background: #f8f9fa;
-  overflow: hidden; /* Prevents the whole page from scrolling */
 }
 
-/* Header - Sticky by default due to Flex */
+/* Header sticky */
 .dashboard-header {
   flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: white;
-  border-bottom: 1px solid #dee2e6;
+  position: sticky;
+  top: 0;
   z-index: 10;
-}
-
-.logo-user {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.header-logo {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.user-info {
-  font-size: 0.9rem;
-  color: #6c757d;
-}
-
-.logout-btn {
-  background: #dc3545;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  font-size: 0.85rem;
 }
 
 /* Mobile Tabs */
@@ -53,7 +21,7 @@
   flex-shrink: 0;
   display: flex;
   justify-content: space-around;
-  background: white;
+  background: #fff;
   border-bottom: 1px solid #dee2e6;
 }
 
@@ -74,20 +42,13 @@
   font-weight: bold;
 }
 
-/* Main Content Area */
+/* Main Flex Layout */
 .dashboard-main {
   display: flex;
   flex: 1;
   gap: 1rem;
   padding: 1rem;
-  overflow: hidden; /* Important to contain the scrollable chat */
-}
-
-.dashboard-desktop {
-  display: flex;
-  width: 100%;
-  gap: 1rem;
-  height: 100%;
+  overflow: hidden;
 }
 
 /* Chat Section */
@@ -111,7 +72,6 @@
   font-weight: bold;
 }
 
-/* Scrollable Messages */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -122,11 +82,10 @@
   background: #ffffff;
 }
 
-/* Alignment Logic */
 .chat-message {
   display: flex;
   flex-direction: column;
-  max-width: 85%;
+  max-width: 80%;
 }
 
 .chat-message.user {
@@ -165,7 +124,6 @@
   margin-top: 4px;
 }
 
-/* Input Area - Fixed at bottom of section */
 .chat-input {
   display: flex;
   gap: 0.5rem;
@@ -207,9 +165,10 @@
   box-shadow: 0 0 8px rgba(0,0,0,0.1);
 }
 
-/* Mobile Adjustments */
+/* Responsive */
 @media (max-width: 768px) {
   .dashboard-main {
+    flex-direction: column;
     padding: 0.5rem;
   }
   .chat-section {

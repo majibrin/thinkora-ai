@@ -1,20 +1,17 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 import './Loader.css';
+import loader from '../assets/loader.png';
 
-const Loader = ({ size = 40, message = "Loading..." }) => {
+function Loader({ text = 'Loading...' }) {
   return (
     <div className="loader-container">
-      <div className="loader-content">
-        <Loader2 
-          className="spinner-icon" 
-          size={size} 
-          strokeWidth={2.5} 
-        />
-        {message && <p className="loader-text">{message}</p>}
+      <div className="loader-circle">
+        <img src={loader} alt="Logo" className="loader-logo" />
+        <div className="loader-ring"></div>
       </div>
+      <p className="loader-text">{text}</p>
     </div>
   );
-};
+}
 
 export default Loader;
