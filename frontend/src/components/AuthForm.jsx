@@ -1,18 +1,24 @@
+// ~/.../src/components/AuthForm.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import './AuthForm.css';
 
+// ✅ Declare API_URL once
+const API_URL = import.meta.env.VITE_API_URL;
+
 const AuthForm = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: ''
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  
- axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -21,9 +27,13 @@ const AuthForm = ({ onAuthSuccess }) => {
 
     try {
       const endpoint = isLogin ? '/token/' : '/register/';
-      const payload = isLogin ? { username: formData.username, password: formData.password } 
-                              : formData;
-      const res = await axios.post(endpoint, payload);
+      const payload = isLogin
+        ? { username: formData.username, password: formData.password }
+        : formData;
+
+      // ✅ Use API_URL here
+      const res = await axios.post(`${API_URL}${endpoint}`, payload);
+
       if (res.data.success) {
         onAuthSuccess(res.data.user, res.data.token);
       } else {
@@ -41,7 +51,9 @@ const AuthForm = ({ onAuthSuccess }) => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
+
         {error && <div className="auth-error">{error}</div>}
+
         <form onSubmit={handleSubmit}>
           {!isLogin && (
             <input
@@ -53,6 +65,7 @@ const AuthForm = ({ onAuthSuccess }) => {
               required
             />
           )}
+
           <input
             type="text"
             name="username"
@@ -61,6 +74,7 @@ const AuthForm = ({ onAuthSuccess }) => {
             onChange={handleChange}
             required
           />
+
           <input
             type="password"
             name="password"
@@ -69,13 +83,22 @@ const AuthForm = ({ onAuthSuccess }) => {
             onChange={handleChange}
             required
           />
+
           <button type="submit" disabled={loading}>
-            {loading ? (isLogin ? 'Logging in...' : 'Signing up...') : (isLogin ? 'Login' : 'Sign Up')}
+            {loading
+              ? isLogin ? 'Logging in...' : 'Signing up...'
+              : isLogin ? 'Login' : 'Sign Up'}
           </button>
         </form>
+
         <div className="auth-toggle">
           {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <span onClick={() => { setIsLogin(!isLogin); setError(''); }}>
+          <span
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError('');
+            }}
+          >
             {isLogin ? 'Sign Up' : 'Login'}
           </span>
         </div>

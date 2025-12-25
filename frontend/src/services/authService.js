@@ -1,99 +1,93 @@
-// authService.js - SIMPLIFIED VERSION
-const API_BASE = import.meta.env.VITE_API_URL;
+// src/services/authService.js
+import axios from 'axios';
 
-export const authService = {
-    // Login with username/password
-    login: async (credentials) => {
-        try {
-            // First, try to get a token (if using token auth)
-            const tokenResponse = await fetch(`${API_BASE}/login/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credentials),
-            });
-            
-            if (!tokenResponse.ok) {
-                // Fallback: Try registration endpoint
-                const registerResponse = await fetch(`${API_BASE}/register/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ...credentials,
-                        email: credentials.username + '@thinkora.com'
-                    }),
-                });
-                
-                const registerData = await registerResponse.json();
-                
-                if (registerResponse.ok) {
-                    // For MVP: Just store username in localStorage
-                    localStorage.setItem('user', JSON.stringify({
-                        username: credentials.username,
-                        email: credentials.username + '@thinkora.com'
-                    }));
-                    return { success: true, user: { username: credentials.username } };
-                }
-                
-                return { error: 'Login failed' };
-            }
-            
-            const data = await tokenResponse.json();
-            
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user || { username: credentials.username }));
-                return { success: true, user: data.user };
-            }
-            
-            return { error: 'No token received' };
-            
-        } catch (error) {
-            console.error('Login error:', error);
-            
-            // MVP FALLBACK: Create user object anyway
-            localStorage.setItem('user', JSON.stringify({
-                username: credentials.username,
-                email: credentials.username + '@thinkora.com',
-                isDemo: true
-            }));
-            
-            return { 
-                success: true, 
-                user: { 
-                    username: credentials.username,
-                    email: credentials.username + '@thinkora.com',
-                    isDemo: true
-                } 
-            };
-        }
+const API_URL = import.meta.env.VITE_API_URL;
+
+// Create axios instance
+const api = axios.create({
+    baseURL: API_URL,
+    timeout: import.meta.env.VITE_API_TIMEOUT || 10000,
+    headers: {
+        'Content-Type': 'application/json',
     },
+});
 
-    // Register new user
-    register: async (userData) => {
-        const response = await fetch(`${API_BASE}/register/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
+const authService = {
+    // =========================
+    // LOGIN
+    // =========================
+    login: async ({ username, password }) => {
+        const response = await api.post('/token/', {
+            username,
+            password,
         });
-        return response.json();
+
+        const { access, refresh } = response.data;
+
+        // Store tokens
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+
+        // Minimal user object (JWT-based auth)
+        const user = { username };
+        localStorage.setItem('user', JSON.stringify(user));
+
+        return user;
     },
 
-    // Logout
+    // =========================
+    // REGISTER
+    // =========================
+    register: async ({ username, email, password }) => {
+        const response = await api.post('/register/', {
+            username,
+            email,
+            password,
+        });
+
+        return response.data;
+    },
+
+    // =========================
+    // LOGOUT
+    // =========================
     logout: () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
     },
 
-    // Get current user
+    // =========================
+    // GET CURRENT USER
+    // =========================
     getCurrentUser: () => {
-        const userStr = localStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
     },
 
-    // Check if authenticated
+    // =========================
+    // AUTH CHECK
+    // =========================
     isAuthenticated: () => {
-        return !!localStorage.getItem('user');
-    }
+        return !!localStorage.getItem('access_token');
+    },
+
+    // =========================
+    // TOKEN REFRESH (for later use)
+    // =========================
+    refreshToken: async () => {
+        const refresh = localStorage.getItem('refresh_token');
+        if (!refresh) throw new Error('No refresh token');
+
+        const response = await api.post('/token/refresh/', {
+            refresh,
+        });
+
+        const { access } = response.data;
+        localStorage.setItem('access_token', access);
+
+        return access;
+    },
 };
 
 export default authService;

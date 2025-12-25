@@ -1,7 +1,15 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const AuthContext = createContext();
+// =======================
+// ENV CONFIG
+// =======================
+const API_URL = import.meta.env.VITE_API_URL;
 
+const AuthContext = createContext(null);
+
+// =======================
+// CUSTOM HOOK
+// =======================
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -10,218 +18,114 @@ export const useAuth = () => {
   return context;
 };
 
+// =======================
+// PROVIDER
+// =======================
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('thinkora_token'));
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem('thinkora_user'))
+  );
   const [loading, setLoading] = useState(true);
 
-  // REAL BACKEND API BASE
-  const API_BASE = import.meta.env.VITE_API_BASE;
-  // Initialize auth - check token validity
+  // =======================
+  // INITIAL AUTH CHECK
+  // =======================
   useEffect(() => {
-    const initializeAuth = async () => {
+    const verifyToken = async () => {
       const savedToken = localStorage.getItem('thinkora_token');
-      const savedUser = localStorage.getItem('thinkora_user');
-      
-      if (savedToken && savedUser) {
-        try {
-          // Verify token by calling protected endpoint
-          const response = await fetch(`${API_BASE}/test/`, {
-            headers: { 'Authorization': `Bearer ${savedToken}` }
-          });
-          
-          if (response.ok) {
-            setToken(savedToken);
-            setUser(JSON.parse(savedUser));
-          } else {
-            // Token invalid, clear storage
-            localStorage.removeItem('thinkora_token');
-            localStorage.removeItem('thinkora_user');
+
+      if (!savedToken) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/test/`, {
+          headers: {
+            Authorization: `Bearer ${savedToken}`
           }
-        } catch (error) {
-          console.error('Token validation error:', error);
-          localStorage.removeItem('thinkora_token');
-          localStorage.removeItem('thinkora_user');
-        }
-      }
-      setLoading(false);
-    };
-    
-    initializeAuth();
-  }, []);
-
-  // REAL LOGIN - Calls Django backend
-  
- // REAL LOGIN - Calls Django backend
-const login = async (credentials) => {
-  try {
-    // Try to get token from Django
-    const response = await fetch(`${API_BASE}/token/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // WITH THIS:
-body: JSON.stringify({
-  email: credentials.username.includes('@') ? credentials.username : `${credentials.username}@thinkora.com`,  // ✅ CORRECT
-  password: credentials.password
-}),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      // ✅ FIX: JWT returns {refresh, access}
-      const accessToken = data.access;
-      localStorage.setItem('thinkora_token', accessToken);
-      setToken(accessToken);
-
-      // ✅ FIX: We need to fetch user profile separately
-      // Try to get user info from protected endpoint
-      const userResponse = await fetch(`${API_BASE}/test/`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-
-      let userData = {
-        username: credentials.username,
-        email: `${credentials.username}@thinkora.com`, // Placeholder
-        id: Date.now() // Placeholder
-      };
-
-      if (userResponse.ok) {
-        const userInfo = await userResponse.json();
-        // Use actual user data from /test/ endpoint
-        userData = {
-          username: userInfo.username || credentials.username,
-          email: userInfo.user_email || `${credentials.username}@thinkora.com`,
-          id: userInfo.user_id || Date.now()
-        };
-      }
-
-      localStorage.setItem('thinkora_user', JSON.stringify(userData));
-      setUser(userData);
-
-      return { success: true, user: userData };
-    } else {
-      // ✅ FIX: Handle JWT error format correctly
-      const errorMsg = data.detail || 
-                       data.non_field_errors?.[0] || 
-                       'Invalid username or password';
-      throw new Error(errorMsg);
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    throw error;
-  }
-};
-
-  
- const register = async (userData) => {
-  try {
-    console.log('📝 Registering with:', userData);  // Add this
-    
-    const response = await fetch(`${API_BASE}/register/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: userData.username,
-        email: userData.email || `${userData.username}@thinkora.com`,
-        password: userData.password
-      }),
-    });
-
-    console.log('📡 Registration response:', response.status);  // Add this
-    const data = await response.json();
-    console.log('📦 Registration data:', data);  // Add this
-
-    // FIXED (CORRECT):
-if (response.ok) {
-  // After registration, auto-login with EMAIL
-  const registeredEmail = userData.email || `${userData.username}@thinkora.com`;
-  
-  console.log('🔄 Auto-login with email:', registeredEmail);  // Debug log
-  
-  return await login({
-    username: registeredEmail,  // ✅ Sends "muhammadabdullahijibrinbir@gmail.com"
-    password: userData.password
-  });
-
-
-    } else {
-      // Handle backend error format correctly
-      const errorMsg = data.error || 
-                       data.username?.[0] || 
-                       data.email?.[0] || 
-                       data.password?.[0] || 
-                       'Registration failed';
-      throw new Error(errorMsg);
-    }
-  } catch (error) {
-    console.error('Registration error:', error);
-    throw error;
-  }
-};
-      
-  // DEMO LOGIN - Creates demo user in backend
-  const demoLogin = async () => {
-    try {
-      // First try to register demo user
-      const registerResponse = await fetch(`${API_BASE}/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: 'demo_user',
-          email: 'demo@thinkora.com',
-          password: 'demo123'
-        }),
-      });
-
-      if (!registerResponse.ok) {
-        // If demo user exists, try to login
-        const loginResponse = await fetch(`${API_BASE}/token/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: 'demo_user',
-            password: 'demo123'
-          }),
         });
 
-        if (!loginResponse.ok) {
-          throw new Error('Demo account setup failed');
+        if (!response.ok) {
+          throw new Error('Invalid token');
         }
-        
-        const loginData = await loginResponse.json();
-        localStorage.setItem('thinkora_token', loginData.access || loginData.token);
-        setToken(loginData.access || loginData.token);
-      }
 
-      // Set demo user data
-      const demoUser = {
-        username: 'demo_user',
-        email: 'demo@thinkora.com',
-        isDemo: true
-      };
-      
-      localStorage.setItem('thinkora_user', JSON.stringify(demoUser));
-      setUser(demoUser);
-      
-      return { success: true, user: demoUser };
-    } catch (error) {
-      console.error('Demo login error:', error);
-      
-      // Ultimate fallback - local demo
-      const demoUser = {
-        username: 'demo_user',
-        email: 'demo@thinkora.com',
-        isDemo: true
-      };
-      
-      localStorage.setItem('thinkora_user', JSON.stringify(demoUser));
-      setUser(demoUser);
-      
-      return { success: true, user: demoUser };
+        // Token is valid
+        setToken(savedToken);
+
+        // Minimal user info (until /me endpoint exists)
+        const savedUser = localStorage.getItem('thinkora_user');
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (error) {
+        console.error('Auth verification failed:', error);
+        localStorage.removeItem('thinkora_token');
+        localStorage.removeItem('thinkora_user');
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyToken();
+  }, []);
+
+  // =======================
+  // LOGIN
+  // =======================
+  const login = async ({ username, password }) => {
+    const response = await fetch(`${API_URL}/token/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || 'Invalid username or password');
     }
+
+    localStorage.setItem('thinkora_token', data.access);
+    setToken(data.access);
+
+    const userData = { username };
+    localStorage.setItem('thinkora_user', JSON.stringify(userData));
+    setUser(userData);
+
+    return { success: true };
   };
 
+  // =======================
+  // REGISTER
+  // =======================
+  const register = async ({ username, password }) => {
+    const response = await fetch(`${API_URL}/register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.username?.[0] ||
+        data.password?.[0] ||
+        'Registration failed'
+      );
+    }
+
+    // Auto-login after successful registration
+    return await login({ username, password });
+  };
+
+  // =======================
+  // LOGOUT
+  // =======================
   const logout = () => {
     localStorage.removeItem('thinkora_token');
     localStorage.removeItem('thinkora_user');
@@ -229,25 +133,26 @@ if (response.ok) {
     setUser(null);
   };
 
+  // =======================
+  // CONTEXT VALUE
+  // =======================
   const value = {
     user,
     token,
     loading,
+    isAuthenticated: !!token,
     login,
     register,
-    demoLogin,
-    logout,
-    isAuthenticated: !!user && !!token
+    logout
   };
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
         height: '100vh',
-        fontSize: '18px'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
         Loading Thinkora...
       </div>
