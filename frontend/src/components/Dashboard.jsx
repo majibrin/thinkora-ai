@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import GpaCalculator from './GpaCalculator.jsx';
+import Header from './Header.jsx';
 import axios from 'axios';
 import './Dashboard.css';
 
@@ -51,13 +52,9 @@ function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    loadChatHistory();
-  }, []);
+  useEffect(() => loadChatHistory(), []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoadingHistory]);
+  useEffect(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages, isLoadingHistory]);
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
@@ -73,13 +70,8 @@ function Dashboard() {
         { message: userMessage, context: 'student' },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
-      if (res.data.success)
-        setMessages((prev) => [...prev, { sender: 'ai', text: res.data.reply }]);
-      else
-        setMessages((prev) => [
-          ...prev,
-          { sender: 'ai', text: res.data.error || 'Unknown error' },
-        ]);
+      if (res.data.success) setMessages((prev) => [...prev, { sender: 'ai', text: res.data.reply }]);
+      else setMessages((prev) => [...prev, { sender: 'ai', text: res.data.error || 'Unknown error' }]);
     } catch (err) {
       let msg = '⚠️ Could not connect to server.';
       if (err.response) msg = `Server error: ${err.response.status}`;
@@ -91,158 +83,74 @@ function Dashboard() {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const clearChat = () => {
-    if (window.confirm('Clear all messages?')) setMessages([]);
-  };
-
+  const handleKeyPress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+  const clearChat = () => { if (window.confirm('Clear all messages?')) setMessages([]); };
   const reloadChat = () => loadChatHistory();
 
-  if (!user)
-    return (
-      <div className="dashboard-loading">
-        <div>
-          <div className="loading-icon">🤖</div>
-          <div>Loading your dashboard...</div>
-        </div>
-      </div>
-    );
+  if (!user) return <div className="dashboard-loading"><div><div className="loading-icon">🤖</div>Loading your dashboard...</div></div>;
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">
-        <div>
-          <h1>🤖 Thinkora AI</h1>
-          <div className="user-info">
-            {user.username} • {messages.length} messages
-          </div>
-        </div>
-        <div className="header-actions">
-          <button onClick={reloadChat}>↻ Reload</button>
-          <button className="logout-btn" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </div>
+      <Header user={{ ...user, messagesCount: messages.length }} onLogout={logout} reloadChat={reloadChat} />
 
       {isMobile && (
         <div className="mobile-tabs">
-          <button
-            className={activeTab === 'chat' ? 'active' : ''}
-            onClick={() => setActiveTab('chat')}
-          >
-            💬 Chat
-          </button>
-          <button
-            className={activeTab === 'tools' ? 'active' : ''}
-            onClick={() => setActiveTab('tools')}
-          >
-            🛠️ Tools
-          </button>
+          <button className={activeTab === 'chat' ? 'active' : ''} onClick={() => setActiveTab('chat')}>💬 Chat</button>
+          <button className={activeTab === 'tools' ? 'active' : ''} onClick={() => setActiveTab('tools')}>🛠️ Tools</button>
         </div>
       )}
 
       <div className="dashboard-main">
-        {error && (
-          <div className="dashboard-error">
-            {error} <button onClick={() => setError('')}>×</button>
-          </div>
-        )}
+        {error && <div className="dashboard-error">{error} <button onClick={() => setError('')}>×</button></div>}
 
         {!isMobile ? (
-          <div className="dashboard-desktop">
-            <div className="chat-section">
-              <div className="chat-header">
-                💬 AI Assistant
-                <button onClick={clearChat}>Clear Chat</button>
-              </div>
-              <div className="chat-messages">
-                {isLoadingHistory ? (
-                  <div className="chat-loading">Loading chat history...</div>
-                ) : messages.length === 0 ? (
-                  <div className="chat-empty">
-                    Welcome to Thinkora, {user.username}!
-                  </div>
-                ) : (
-                  messages.map((msg, idx) => (
-                    <div key={idx} className={`chat-message ${msg.sender}`}>
-                      <div className="bubble">{msg.text}</div>
-                      <div className="bubble-info">
-                        {msg.sender === 'user' ? 'You' : 'Thinkora AI'}
+          <>
+            <div className="dashboard-desktop">
+              <div className="chat-section">
+                <div className="chat-header">💬 AI Assistant <button onClick={clearChat}>Clear Chat</button></div>
+                <div className="chat-messages">
+                  {isLoadingHistory ? <div className="chat-loading">Loading chat history...</div>
+                  : messages.length === 0 ? <div className="chat-empty">Welcome, {user.username}!</div>
+                  : messages.map((msg, idx) => (
+                      <div key={idx} className={`chat-message ${msg.sender}`}>
+                        <div className="bubble">{msg.text}</div>
+                        <div className="bubble-info">{msg.sender === 'user' ? 'You' : 'Thinkora AI'}</div>
                       </div>
-                    </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-                {loading && <div className="chat-loading">Thinking...</div>}
-              </div>
-              <div className="chat-input">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
-                  disabled={loading}
-                />
-                <button onClick={sendMessage} disabled={loading || !input.trim()}>
-                  Send
-                </button>
-              </div>
-            </div>
-
-            <div className="tools-section">
-              <div className="card">
-                <h3>🛠️ Tools & Features</h3>
-                <div className="tools-grid">
-                  <button onClick={() => setIsCalculating(!isCalculating)}>
-                    📊 GPA Calculator
-                  </button>
-                  <button onClick={() => setInput('What AI features do you have?')}>
-                    🤖 AI Features
-                  </button>
+                  ))}
+                  <div ref={messagesEndRef} />
+                  {loading && <div className="chat-loading">Thinking...</div>}
                 </div>
-                {isCalculating && <GpaCalculator onHide={() => setIsCalculating(false)} />}
+                <div className="chat-input">
+                  <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." disabled={loading}/>
+                  <button onClick={sendMessage} disabled={loading || !input.trim()}>Send</button>
+                </div>
               </div>
 
-              <div className="card">
-                <h4>📊 System Status</h4>
-                <div>Backend: 🟢 Online</div>
-                <div>Messages: {messages.length}</div>
-                <div>GPA Scale: 5.00</div>
-                <div>User: {user.username}</div>
+              <div className="tools-section">
+                <div className="card">
+                  <h3>🛠️ Tools & Features</h3>
+                  <div className="tools-grid">
+                    <button onClick={() => setIsCalculating(!isCalculating)}>📊 GPA Calculator</button>
+                    <button onClick={() => setInput('What AI features do you have?')}>🤖 AI Features</button>
+                  </div>
+                  {isCalculating && <GpaCalculator onHide={() => setIsCalculating(false)} />}
+                </div>
               </div>
             </div>
-          </div>
+          </>
         ) : (
           <>
             {activeTab === 'chat' && (
               <div className="chat-section">
                 <div className="chat-messages">
                   {messages.map((msg, idx) => (
-                    <div key={idx} className={`chat-message ${msg.sender}`}>
-                      <div className="bubble">{msg.text}</div>
-                    </div>
+                    <div key={idx} className={`chat-message ${msg.sender}`}><div className="bubble">{msg.text}</div></div>
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
                 <div className="chat-input">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type message..."
-                  />
-                  <button onClick={sendMessage} disabled={loading || !input.trim()}>
-                    Send
-                  </button>
+                  <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type message..." />
+                  <button onClick={sendMessage} disabled={loading || !input.trim()}>Send</button>
                 </div>
               </div>
             )}
@@ -250,9 +158,7 @@ function Dashboard() {
               <div className="tools-section">
                 <div className="card">
                   <h3>📊 GPA Calculator</h3>
-                  <button onClick={() => setIsCalculating(!isCalculating)}>
-                    {isCalculating ? 'Close' : 'Open'}
-                  </button>
+                  <button onClick={() => setIsCalculating(!isCalculating)}>{isCalculating ? 'Close' : 'Open'}</button>
                   {isCalculating && <GpaCalculator onHide={() => setIsCalculating(false)} />}
                 </div>
               </div>

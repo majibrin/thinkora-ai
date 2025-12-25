@@ -14,9 +14,7 @@ const AuthForm = ({ onAuthSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -26,51 +24,29 @@ const AuthForm = ({ onAuthSuccess }) => {
     try {
       let res;
       if (isLogin) {
-        // LOGIN requires only email & password
-        res = await axios.post(`${API_URL}/token/`, {
-          email: formData.email,
-          password: formData.password
-        });
+        res = await axios.post(`${API_URL}/token/`, { email: formData.email, password: formData.password });
       } else {
-        // REGISTER requires username, email, password
-        res = await axios.post(`${API_URL}/register/`, {
-          username: formData.username,
-          email: formData.email,
-          password: formData.password
-        });
+        res = await axios.post(`${API_URL}/register/`, { username: formData.username, email: formData.email, password: formData.password });
       }
 
       if (res.data.access || res.data.success) {
         if (res.data.access) {
           localStorage.setItem('thinkora_token', res.data.access);
-          localStorage.setItem('thinkora_user', JSON.stringify({
-            email: formData.email
-          }));
+          localStorage.setItem('thinkora_user', JSON.stringify({ email: formData.email }));
           onAuthSuccess({ email: formData.email }, res.data.access);
         } else if (res.data.success) {
-          // Auto-login after registration
-          const loginRes = await axios.post(`${API_URL}/token/`, {
-            email: formData.email,
-            password: formData.password
-          });
+          const loginRes = await axios.post(`${API_URL}/token/`, { email: formData.email, password: formData.password });
           localStorage.setItem('thinkora_token', loginRes.data.access);
-          localStorage.setItem('thinkora_user', JSON.stringify({
-            email: formData.email,
-            username: formData.username
-          }));
+          localStorage.setItem('thinkora_user', JSON.stringify({ email: formData.email, username: formData.username }));
           onAuthSuccess({ email: formData.email, username: formData.username }, loginRes.data.access);
         }
       } else {
         setError(res.data.error || 'Authentication failed');
       }
-  /*  } catch (err) {
-      console.error(err);
-      setError('Server error. Try again later.');
-   */
-}catch (err) {
-  console.error(err.response?.data || err);
-  setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Server error');
- } finally {
+    } catch (err) {
+      console.error(err.response?.data || err);
+      setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Server error');
+    } finally {
       setLoading(false);
     }
   };
@@ -79,7 +55,6 @@ const AuthForm = ({ onAuthSuccess }) => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
-
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -91,7 +66,6 @@ const AuthForm = ({ onAuthSuccess }) => {
             onChange={handleChange}
             required
           />
-
           {!isLogin && (
             <input
               type="text"
@@ -102,7 +76,6 @@ const AuthForm = ({ onAuthSuccess }) => {
               required
             />
           )}
-
           <input
             type="password"
             name="password"
@@ -111,11 +84,8 @@ const AuthForm = ({ onAuthSuccess }) => {
             onChange={handleChange}
             required
           />
-
           <button type="submit" disabled={loading}>
-            {loading
-              ? isLogin ? 'Logging in...' : 'Signing up...'
-              : isLogin ? 'Login' : 'Sign Up'}
+            {loading ? (isLogin ? 'Logging in...' : 'Signing up...') : isLogin ? 'Login' : 'Sign Up'}
           </button>
         </form>
 

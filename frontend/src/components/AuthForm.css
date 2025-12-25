@@ -1,22 +1,23 @@
-*{
+* {
   padding: 0;
   margin: 0;
+  box-sizing: border-box;
 }
-/* Container & Card */
+
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(to bottom right, #4caf50, #81c784);
-  padding: 20px;
+  padding: 15px;
 }
 
 .auth-card {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-  padding: 30px 25px;
+  padding: 30px;
   max-width: 400px;
   width: 100%;
   text-align: center;
@@ -30,7 +31,7 @@
 
 /* Inputs */
 .auth-card input {
-  widh: 100%;
+  width: 100%;
   padding: 12px 15px;
   margin: 10px 0;
   border: 1px solid #ccc;
@@ -47,14 +48,15 @@
 /* Buttons */
 .auth-card button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: #4caf50;
   border: none;
   border-radius: 8px;
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: background-color 0.3s;
+  margin-top: 10px;
 }
 
 .auth-card button:hover {
@@ -72,14 +74,14 @@
   color: #721c24;
   padding: 10px 12px;
   border-radius: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   font-size: 0.9rem;
 }
 
 /* Toggle */
 .auth-toggle {
   margin-top: 15px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: #555;
 }
 
@@ -98,5 +100,6 @@
 @media (max-width: 480px) {
   .auth-card {
     padding: 25px 15px;
+    width: 100%;
   }
 }
