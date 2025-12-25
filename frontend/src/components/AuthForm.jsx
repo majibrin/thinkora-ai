@@ -1,3 +1,4 @@
+// src/components/AuthForm.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import './AuthForm.css';
@@ -14,7 +15,9 @@ const AuthForm = ({ onAuthSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -22,27 +25,32 @@ const AuthForm = ({ onAuthSuccess }) => {
     setError('');
 
     try {
-      let res;
+      let userObj;
+
       if (isLogin) {
-        res = await axios.post(`${API_URL}/token/`, { email: formData.email, password: formData.password });
+        const res = await axios.post(`${API_URL}/token/`, {
+          email: formData.email,
+          password: formData.password
+        });
+        const user = res.data.user || { email: formData.email, username: '' };
+        localStorage.setItem('user', JSON.stringify(user));
+        onAuthSuccess(user, res.data.access);
       } else {
-        res = await axios.post(`${API_URL}/register/`, { username: formData.username, email: formData.email, password: formData.password });
+        await axios.post(`${API_URL}/register/`, {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
+        });
+        // Auto-login after registration
+        const loginRes = await axios.post(`${API_URL}/token/`, {
+          email: formData.email,
+          password: formData.password
+        });
+        userObj = loginRes.data.user || { email: formData.email, username: formData.username };
+        localStorage.setItem('user', JSON.stringify(userObj));
+        onAuthSuccess(userObj, loginRes.data.access);
       }
 
-      if (res.data.access || res.data.success) {
-        if (res.data.access) {
-          localStorage.setItem('thinkora_token', res.data.access);
-          localStorage.setItem('thinkora_user', JSON.stringify({ email: formData.email }));
-          onAuthSuccess({ email: formData.email }, res.data.access);
-        } else if (res.data.success) {
-          const loginRes = await axios.post(`${API_URL}/token/`, { email: formData.email, password: formData.password });
-          localStorage.setItem('thinkora_token', loginRes.data.access);
-          localStorage.setItem('thinkora_user', JSON.stringify({ email: formData.email, username: formData.username }));
-          onAuthSuccess({ email: formData.email, username: formData.username }, loginRes.data.access);
-        }
-      } else {
-        setError(res.data.error || 'Authentication failed');
-      }
     } catch (err) {
       console.error(err.response?.data || err);
       setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Server error');
@@ -58,34 +66,11 @@ const AuthForm = ({ onAuthSuccess }) => {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-          {!isLogin && (
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
-          )}
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+          <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+          {!isLogin && <input type="text" name="username" placeholder="Username" value={formData.username} onChange={handleChange} required />}
+          <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
           <button type="submit" disabled={loading}>
-            {loading ? (isLogin ? 'Logging in...' : 'Signing up...') : isLogin ? 'Login' : 'Sign Up'}
+            {loading ? (isLogin ? 'Logging in...' : 'Signing up...') : (isLogin ? 'Login' : 'Sign Up')}
           </button>
         </form>
 
