@@ -2,7 +2,7 @@
 .dashboard-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* dynamic vh for mobile address bar */
   overflow: hidden;
   font-family: sans-serif;
   background: #f8f9fa;
@@ -14,6 +14,18 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+  height: 70px; /* fixed header height for consistency */
+}
+
+.dashboard-header .header-logo {
+  height: 50px; /* larger logo */
+  width: auto;
 }
 
 /* Mobile Tabs */
@@ -60,9 +72,9 @@
   border-radius: 8px;
   box-shadow: 0 0 8px rgba(0,0,0,0.1);
   overflow: hidden;
-  height: 100%;
 }
 
+/* Chat Header */
 .chat-header {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #eee;
@@ -72,6 +84,7 @@
   font-weight: bold;
 }
 
+/* Chat Messages */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -82,6 +95,7 @@
   background: #ffffff;
 }
 
+/* Message Bubbles */
 .chat-message {
   display: flex;
   flex-direction: column;
@@ -124,12 +138,14 @@
   margin-top: 4px;
 }
 
+/* Chat Input */
 .chat-input {
   display: flex;
   gap: 0.5rem;
   padding: 1rem;
   border-top: 1px solid #dee2e6;
   background: white;
+  flex-shrink: 0;
 }
 
 .chat-input input {
@@ -174,6 +190,7 @@
   .chat-section {
     border-radius: 0;
     box-shadow: none;
+    min-height: calc(100dvh - 70px - 50px); /* account for header + mobile tabs */
   }
   .bubble {
     max-width: 90%;
