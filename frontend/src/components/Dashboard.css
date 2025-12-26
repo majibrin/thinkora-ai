@@ -1,8 +1,16 @@
+/* 1. Global Reset to lock the viewport */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevents the whole page from scrolling */
+}
+
 /* Full Height Layout */
 .dashboard-container {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* dynamic vh for mobile address bar */
+  height: 100dvh; /* Dynamic vh for mobile address bar */
   overflow: hidden;
   font-family: sans-serif;
   background: #f8f9fa;
@@ -20,11 +28,11 @@
   padding: 0.75rem 1rem;
   background: #fff;
   border-bottom: 1px solid #dee2e6;
-  height: 70px; /* fixed header height for consistency */
+  height: 70px; 
 }
 
 .dashboard-header .header-logo {
-  height: 50px; /* larger logo */
+  height: 50px;
   width: auto;
 }
 
@@ -60,7 +68,7 @@
   flex: 1;
   gap: 1rem;
   padding: 1rem;
-  overflow: hidden;
+  overflow: hidden; /* Ensures only internal sections scroll */
 }
 
 /* Chat Section */
@@ -87,7 +95,7 @@
 /* Chat Messages */
 .chat-messages {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* Only the messages area should scroll */
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -117,7 +125,7 @@
   border-radius: 1rem;
   font-size: 0.95rem;
   line-height: 1.4;
-  word-wrap: break-word;
+  word-wrap: break-word; /* Prevents text overflow */
 }
 
 .chat-message.user .bubble {
@@ -181,18 +189,27 @@
   box-shadow: 0 0 8px rgba(0,0,0,0.1);
 }
 
-/* Responsive */
+/* Responsive Update */
 @media (max-width: 768px) {
   .dashboard-main {
     flex-direction: column;
-    padding: 0.5rem;
+    padding: 0; /* Remove padding to maximize mobile space */
+    gap: 0;
   }
+  
   .chat-section {
     border-radius: 0;
     box-shadow: none;
-    min-height: calc(100dvh - 70px - 50px); /* account for header + mobile tabs */
+    flex: 1; /* Automatically fills remaining screen height */
+    height: 0; /* Forces flex-grow to handle the sizing */
   }
+
   .bubble {
     max-width: 90%;
+  }
+
+  /* Assuming you want to hide the tools when the Chat tab is active */
+  .tools-section {
+    display: none; 
   }
 }
