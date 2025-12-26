@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AuthForm.css';
-
+import loader from '../assets/loader.png';
 const AuthForm = () => {
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ const AuthForm = () => {
     <div className="auth-container" role="main" aria-label="Authentication">
       <div className="auth-card">
         <img 
-          src="/assets/logo.png" 
+          src={loader} 
           alt="Thinkora Logo" 
           className="auth-logo"
         />
