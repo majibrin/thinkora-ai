@@ -1,36 +1,36 @@
 /* =====================================
-   THINKORA HEADER STYLES
+   THINKORA HEADER STYLES - LARGER VERSION
    ===================================== */
 
 .dashboard-header {
   width: 100%;
-  height: 70px;
+  height: 80px; /* Increased from 70px */
   background: #ffffff;
   border-bottom: 1px solid #eaeaea;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
+  padding: 0 1.5rem; /* Increased padding */
   box-sizing: border-box;
   position: sticky;
   top: 0;
   z-index: 100;
-  flex-shrink: 0; /* Prevent shrinking in flex layouts */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Stronger shadow */
 }
 
 /* LEFT SIDE (LOGO + USER) */
 .logo-user {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px; /* Increased gap */
 }
 
 .header-logo {
-  width: 42px;
-  height: 42px;
+  width: 50px; /* Increased from 42px */
+  height: 50px; /* Increased from 42px */
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 10px; /* Slightly larger radius */
   transition: transform 0.2s ease;
 }
 
@@ -39,22 +39,22 @@
 }
 
 .user-info {
-  font-size: 0.95rem;
+  font-size: 1.1rem; /* Increased from 0.95rem */
   color: #374151;
-  font-weight: 500;
+  font-weight: 600; /* Bolder */
   white-space: nowrap;
 }
 
 .user-info span {
   color: #3b82f6;
-  font-weight: 600;
+  font-weight: 700; /* Even bolder */
 }
 
 /* RIGHT SIDE (ACTIONS) */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem; /* Increased gap */
 }
 
 /* Status Indicator */
@@ -62,19 +62,19 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Slightly larger */
   color: #6b7280;
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem 0.75rem; /* More padding */
   background: #f9fafb;
-  border-radius: 4px;
+  border-radius: 6px; /* Larger radius */
   border: 1px solid #e5e7eb;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px; /* Larger */
+  height: 10px; /* Larger */
   border-radius: 50%;
-  background: #10b981; /* Green for online */
+  background: #10b981;
 }
 
 /* Logout Button */
@@ -82,22 +82,23 @@
   background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #ffffff;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  padding: 0.75rem 1.25rem; /* Larger padding */
+  border-radius: 8px; /* Larger radius */
+  font-size: 1rem; /* Larger font */
+  font-weight: 600; /* Bolder */
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
+  min-height: 44px; /* Minimum touch target size */
 }
 
 .logout-btn:hover {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
 }
 
 .logout-btn:active {
@@ -110,7 +111,7 @@
 
 .header-loader {
   width: 100%;
-  height: 70px;
+  height: 80px; /* Match new header height */
   background: #f9fafb;
   display: flex;
   align-items: center;
@@ -119,8 +120,8 @@
 }
 
 .header-loader img {
-  width: 28px;
-  height: 28px;
+  width: 32px; /* Larger */
+  height: 32px; /* Larger */
   animation: spin 1s linear infinite;
 }
 
@@ -130,66 +131,93 @@
 }
 
 /* =====================================
-   RESPONSIVE
+   RESPONSIVE - ADJUSTED FOR NEW SIZES
    ===================================== */
 
 @media (max-width: 768px) {
   .dashboard-header {
-    padding: 0 1rem;
-    height: 70px;
+    padding: 0 1.25rem;
+    height: 75px; /* Slightly smaller but still larger */
   }
-  
+
   .user-info {
-    font-size: 0.85rem;
+    font-size: 1rem;
   }
-  
+
   .header-logo {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
   }
-  
+
   .logout-btn {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+    min-height: 40px;
   }
-  
+
   .header-status {
-    display: none; /* Hide status on mobile */
+    display: none;
   }
 }
 
 @media (max-width: 640px) {
   .dashboard-header {
-    padding: 0 0.75rem;
+    padding: 0 1rem;
+    height: 70px;
   }
-  
+
   .user-info {
-    display: none; /* Hide user info on very small screens */
+    font-size: 0.9rem;
   }
-  
+
   .logo-user {
-    gap: 0.75rem;
+    gap: 12px;
   }
-  
+
   .logout-btn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    min-height: 38px;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-header {
-    height: 60px;
+    height: 65px;
   }
-  
+
+  .user-info {
+    display: none; /* Hide user info on very small screens */
+  }
+
   .header-logo {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
-  
+
   .logout-btn {
-    padding: 0.35rem 0.5rem;
-    font-size: 0.7rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+}
+
+/* For extremely small screens */
+@media (max-width: 375px) {
+  .dashboard-header {
+    height: 60px;
+    padding: 0 0.75rem;
+  }
+
+  .header-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .logout-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+    min-height: 34px;
   }
 }
 
@@ -199,18 +227,24 @@
     background: #1f2937;
     border-bottom-color: #374151;
   }
-  
+
   .user-info {
     color: #e5e7eb;
   }
-  
+
   .header-status {
     background: #374151;
     border-color: #4b5563;
     color: #d1d5db;
   }
-  
+
   .logout-btn {
     background: linear-gradient(135deg, #dc2626, #b91c1c);
   }
+}
+
+/* Accessibility - Focus styles */
+.logout-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }

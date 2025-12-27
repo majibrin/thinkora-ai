@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Loader from './Loader';
 import './AuthForm.css';
 import logoImage from '../assets/loader.png';
 
@@ -103,11 +102,6 @@ const AuthForm = () => {
     );
   };
 
-  // Show full-page loader when loading
-  if (loading) {
-    return <Loader message={isLogin ? "Logging you in..." : "Creating your account..."} />;
-  }
-
   return (
     <div className="auth-container" role="main" aria-label="Authentication">
       <div className="auth-card">
@@ -176,7 +170,14 @@ const AuthForm = () => {
             disabled={loading}
             aria-busy={loading}
           >
-            {isLogin ? 'Login' : 'Sign Up'}
+            {loading ? (
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="button-spinner"></span>
+                <span>{isLogin ? 'Logging in...' : 'Creating account...'}</span>
+              </span>
+            ) : (
+              <span>{isLogin ? 'Login' : 'Sign Up'}</span>
+            )}
           </button>
         </form>
 

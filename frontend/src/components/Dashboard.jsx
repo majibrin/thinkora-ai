@@ -1,4 +1,4 @@
-// src/components/Dashboard.jsx - FIXED VERSION
+// src/components/Dashboard.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Header from './Header';
@@ -9,7 +9,7 @@ import './Dashboard.css';
 import './GpaCalculator.css';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth(); // Removed token - not needed
+  const { user, logout } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,64 +20,81 @@ const Dashboard = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const messagesEndRef = useRef(null);
 
-  // Mobile detection
+  // Mobile detection and viewport fix
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      
+      // Fix mobile viewport height (address bar issue)
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Set initial
+    handleResize();
+    
+    // Add event listeners
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    // Handle visual viewport changes (mobile keyboards)
+    if (window.visualViewport) {
+      const handleVisualResize = () => {
+        setTimeout(handleResize, 100); // Small delay for iOS
+      };
+      window.visualViewport.addEventListener('resize', handleVisualResize);
+      
+      return () => {
+        window.visualViewport.removeEventListener('resize', handleVisualResize);
+      };
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
 
-  // Add this to your Dashboard.jsx component
-useEffect(() => {
-  // Fix for mobile viewport height (address bar issue)
-  const setVh = () => {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-  };
-
-  // Set on load and resize
-  setVh();
-  window.addEventListener('resize', setVh);
-  window.addEventListener('orientationchange', setVh);
-
-  // Handle visual viewport changes (mobile keyboards)
-  if (window.visualViewport) {
-    const handleResize = () => {
-      setTimeout(setVh, 100); // Small delay for iOS
+  // Prevent desktop overflow
+  useEffect(() => {
+    const preventOverflow = () => {
+      if (window.innerWidth >= 769) {
+        document.body.style.overflowX = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
+      } else {
+        document.body.style.overflowX = 'auto';
+        document.documentElement.style.overflowX = 'auto';
+      }
     };
-    window.visualViewport.addEventListener('resize', handleResize);
+    
+    preventOverflow();
+    window.addEventListener('resize', preventOverflow);
     
     return () => {
-      window.visualViewport.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', preventOverflow);
+      document.body.style.overflowX = 'auto';
+      document.documentElement.style.overflowX = 'auto';
     };
-  }
+  }, []);
 
-  return () => {
-    window.removeEventListener('resize', setVh);
-    window.removeEventListener('orientationchange', setVh);
-  };
-}, []);
-
-  // Load chat history - FIXED: No manual headers
+  // Load chat history
   const loadChatHistory = async () => {
     try {
       setIsLoadingHistory(true);
       setError('');
       
-      // AuthContext already set axios headers globally
       const res = await axios.get('/chat/history/');
       
       if (res.data.success && res.data.history) {
         setMessages(res.data.history.map(msg => ({
           sender: msg.sender === 'user' ? 'user' : 'ai',
           text: msg.text,
-          time: msg.time
+          time: msg.time || new Date().toISOString()
         })));
       }
     } catch (err) {
       console.error('Failed to load chat history:', err);
       
-      // Check if it's an auth error
       if (err.response?.status === 401) {
         setError('Session expired. Please login again.');
       } else {
@@ -88,42 +105,45 @@ useEffect(() => {
     }
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     if (user) {
-      loadChatHistory(); 
+      loadChatHistory();
     }
-  }, [user]); // Only load when user exists
+  }, [user]);
 
   // Auto-scroll
-  useEffect(() => { 
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoadingHistory]);
 
-  // Send message - FIXED: No manual headers
+  // Send message
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     const userMessage = input;
     setInput('');
     setLoading(true);
-    setMessages(prev => [...prev, { sender: 'user', text: userMessage }]);
+    setMessages(prev => [...prev, { 
+      sender: 'user', 
+      text: userMessage,
+      time: new Date().toISOString()
+    }]);
     setError('');
 
     try {
-      // AuthContext already set axios headers globally
-      const res = await axios.post('/chat/', { 
-        message: userMessage, 
-        context: 'student' 
+      const res = await axios.post('/chat/', {
+        message: userMessage,
+        context: 'student'
       });
-      
+
       if (res.data.success) {
-        setMessages(prev => [...prev, { 
-          sender: 'ai', 
+        setMessages(prev => [...prev, {
+          sender: 'ai',
           text: res.data.reply,
           time: new Date().toISOString()
         }]);
       } else {
-        setMessages(prev => [...prev, { 
-          sender: 'ai', 
+        setMessages(prev => [...prev, {
+          sender: 'ai',
           text: res.data.error || 'Unknown error',
           time: new Date().toISOString()
         }]);
@@ -139,29 +159,29 @@ useEffect(() => {
       } else if (err.request) {
         msg = 'No response from server. Backend may be offline.';
       }
-      
-      setMessages(prev => [...prev, { 
-        sender: 'ai', 
+
+      setMessages(prev => [...prev, {
+        sender: 'ai',
         text: msg,
         time: new Date().toISOString()
       }]);
       setError(msg);
-    } finally { 
-      setLoading(false); 
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleKeyPress = e => { 
-    if (e.key === 'Enter' && !e.shiftKey) { 
-      e.preventDefault(); 
-      sendMessage(); 
-    } 
+  const handleKeyPress = e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
-  
-  const clearChat = () => { 
-    if (window.confirm('Clear all messages?')) setMessages([]); 
+
+  const clearChat = () => {
+    if (window.confirm('Clear all messages?')) setMessages([]);
   };
-  
+
   const reloadChat = () => loadChatHistory();
 
   const quickActions = [
@@ -182,15 +202,17 @@ useEffect(() => {
       {/* Mobile Tabs */}
       {isMobile && (
         <div className="mobile-tabs">
-          <button 
-            className={activeTab === 'chat' ? 'active' : ''} 
+          <button
+            className={activeTab === 'chat' ? 'active' : ''}
             onClick={() => setActiveTab('chat')}
+            aria-label="Chat tab"
           >
             💬 Chat
           </button>
-          <button 
-            className={activeTab === 'tools' ? 'active' : ''} 
+          <button
+            className={activeTab === 'tools' ? 'active' : ''}
             onClick={() => setActiveTab('tools')}
+            aria-label="Tools tab"
           >
             🛠️ Tools
           </button>
@@ -201,8 +223,13 @@ useEffect(() => {
         {/* Error Alert */}
         {error && (
           <div className="dashboard-error">
-            {error} 
-            <button onClick={() => setError('')}>×</button>
+            {error}
+            <button 
+              onClick={() => setError('')}
+              aria-label="Close error"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -212,16 +239,25 @@ useEffect(() => {
             {/* Chat Section */}
             <div className="chat-section">
               <div className="chat-header">
-                💬 AI Assistant
+                <div className="chat-header-title">
+                  💬 AI Assistant
+                  <span className="chat-user-info">Welcome, {user.username}</span>
+                </div>
                 <div className="chat-header-actions">
-                  <button onClick={reloadChat}>🔄 Reload</button>
-                  <button onClick={clearChat}>🗑️ Clear</button>
+                  <button onClick={reloadChat} aria-label="Reload chat">
+                    🔄 Reload
+                  </button>
+                  <button onClick={clearChat} aria-label="Clear chat">
+                    🗑️ Clear
+                  </button>
                 </div>
               </div>
               
               <div className="chat-messages">
                 {isLoadingHistory ? (
-                  <Loader message="Loading chat history..." variant="small" />
+                  <div className="chat-loading">
+                    <Loader message="Loading chat history..." variant="small" />
+                  </div>
                 ) : messages.length === 0 ? (
                   <div className="empty-chat-state">
                     <h3>Welcome to Thinkora, {user.username}! 👋</h3>
@@ -232,7 +268,9 @@ useEffect(() => {
                           key={idx}
                           onClick={() => {
                             setInput(action.text);
+                            document.querySelector('.chat-input input')?.focus();
                           }}
+                          aria-label={`Quick action: ${action.label}`}
                         >
                           {action.emoji} {action.label}
                         </button>
@@ -244,27 +282,38 @@ useEffect(() => {
                     <div key={idx} className={`chat-message ${msg.sender}`}>
                       <div className="bubble">{msg.text}</div>
                       <div className="bubble-info">
-                        {msg.sender === 'user' ? 'You' : 'Thinkora AI'} • {new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {msg.sender === 'user' ? 'You' : 'Thinkora AI'} • {
+                          new Date(msg.time).toLocaleTimeString([], {
+                            hour: '2-digit', 
+                            minute: '2-digit'
+                          })
+                        }
                       </div>
                     </div>
                   ))
                 )}
                 <div ref={messagesEndRef} />
-                {loading && <Loader message="Thinking..." variant="inline" showProgress={false} />}
+                {loading && (
+                  <div className="thinking-loader">
+                    <Loader message="Thinking..." variant="inline" showProgress={false} />
+                  </div>
+                )}
               </div>
               
               <div className="chat-input">
-                <input 
-                  type="text" 
-                  value={input} 
-                  onChange={e => setInput(e.target.value)} 
-                  onKeyPress={handleKeyPress} 
-                  placeholder="Type your message..." 
+                <input
+                  type="text"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
                   disabled={loading}
+                  aria-label="Chat input"
                 />
-                <button 
-                  onClick={sendMessage} 
+                <button
+                  onClick={sendMessage}
                   disabled={loading || !input.trim()}
+                  aria-label="Send message"
                 >
                   {loading ? 'Sending...' : 'Send'}
                 </button>
@@ -276,10 +325,19 @@ useEffect(() => {
               <div className="card">
                 <h3>🛠️ Tools & Features</h3>
                 <div className="tools-grid">
-                  <button onClick={() => setIsCalculating(!isCalculating)}>
+                  <button 
+                    onClick={() => setIsCalculating(!isCalculating)}
+                    aria-label="Open GPA Calculator"
+                  >
                     📊 GPA Calculator
                   </button>
-                  <button onClick={() => { setInput("What AI features do you have?"); }}>
+                  <button 
+                    onClick={() => { 
+                      setInput("What AI features do you have?");
+                      document.querySelector('.chat-input input')?.focus();
+                    }}
+                    aria-label="Ask about AI features"
+                  >
                     🤖 AI Features
                   </button>
                 </div>
@@ -288,10 +346,18 @@ useEffect(() => {
               
               <div className="card">
                 <h4>📊 System Status</h4>
-                <div><strong>Backend:</strong> {error ? '🔴 Offline' : '🟢 Online'}</div>
-                <div><strong>Messages:</strong> {messages.length}</div>
-                <div><strong>GPA Scale:</strong> 5.00</div>
-                <div><strong>User:</strong> {user.username}</div>
+                <div className="status-item">
+                  <strong>Backend:</strong> {error ? '🔴 Offline' : '🟢 Online'}
+                </div>
+                <div className="status-item">
+                  <strong>Messages:</strong> {messages.length}
+                </div>
+                <div className="status-item">
+                  <strong>GPA Scale:</strong> 5.00
+                </div>
+                <div className="status-item">
+                  <strong>User:</strong> {user.username}
+                </div>
               </div>
             </div>
           </div>
@@ -307,20 +373,26 @@ useEffect(() => {
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
-                  {loading && <Loader message="Thinking..." />}
+                  {loading && (
+                    <div className="thinking-loader">
+                      <Loader message="Thinking..." variant="inline" showProgress={false} />
+                    </div>
+                  )}
                 </div>
                 <div className="chat-input">
-                  <input 
-                    type="text" 
-                    value={input} 
-                    onChange={e => setInput(e.target.value)} 
-                    onKeyPress={handleKeyPress} 
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     placeholder="Type message..."
                     disabled={loading}
+                    aria-label="Chat input"
                   />
-                  <button 
-                    onClick={sendMessage} 
+                  <button
+                    onClick={sendMessage}
                     disabled={loading || !input.trim()}
+                    aria-label="Send message"
                   >
                     {loading ? '...' : 'Send'}
                   </button>
@@ -332,7 +404,10 @@ useEffect(() => {
               <div className="tools-section active">
                 <div className="card">
                   <h3>📊 GPA Calculator</h3>
-                  <button onClick={() => setIsCalculating(!isCalculating)}>
+                  <button 
+                    onClick={() => setIsCalculating(!isCalculating)}
+                    aria-label={isCalculating ? 'Close calculator' : 'Open calculator'}
+                  >
                     {isCalculating ? 'Close' : 'Open Calculator'}
                   </button>
                   {isCalculating && <GpaCalculator onHide={() => setIsCalculating(false)} />}
@@ -346,8 +421,12 @@ useEffect(() => {
                         key={idx}
                         onClick={() => {
                           setInput(action.text);
-                          setActiveTab('chat'); // Switch to chat tab
+                          setActiveTab('chat');
+                          setTimeout(() => {
+                            document.querySelector('.chat-input input')?.focus();
+                          }, 100);
                         }}
+                        aria-label={`Quick action: ${action.label}`}
                       >
                         {action.emoji} {action.label}
                       </button>
