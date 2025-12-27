@@ -1,4 +1,4 @@
-// src/components/Dashboard.jsx
+// src/components/Dashboard.jsx - FIXED VERSION
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Header from './Header';
@@ -8,7 +8,7 @@ import axios from 'axios';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { user, token, logout } = useAuth();
+  const { user, logout } = useAuth(); // Removed token - not needed
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,14 +19,6 @@ const Dashboard = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const messagesEndRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  // Axios config
-  useEffect(() => {
-    axios.defaults.baseURL = API_URL;
-    if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }, [token]);
-
   // Mobile detection
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -34,14 +26,15 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Load chat history
+  // Load chat history - FIXED: No manual headers
   const loadChatHistory = async () => {
     try {
       setIsLoadingHistory(true);
       setError('');
-      const res = await axios.get('/chat/history/', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      
+      // AuthContext already set axios headers globally
+      const res = await axios.get('/chat/history/');
+      
       if (res.data.success && res.data.history) {
         setMessages(res.data.history.map(msg => ({
           sender: msg.sender === 'user' ? 'user' : 'ai',
@@ -50,19 +43,31 @@ const Dashboard = () => {
         })));
       }
     } catch (err) {
-      console.error(err);
-      setError('Could not load chat history. Backend may be offline.');
+      console.error('Failed to load chat history:', err);
+      
+      // Check if it's an auth error
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+      } else {
+        setError('Could not load chat history. Backend may be offline.');
+      }
     } finally {
       setIsLoadingHistory(false);
     }
   };
 
-  useEffect(() => { loadChatHistory(); }, []);
+  useEffect(() => { 
+    if (user) {
+      loadChatHistory(); 
+    }
+  }, [user]); // Only load when user exists
 
   // Auto-scroll
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoadingHistory]);
+  useEffect(() => { 
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); 
+  }, [messages, isLoadingHistory]);
 
-  // Send message
+  // Send message - FIXED: No manual headers
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     const userMessage = input;
@@ -72,21 +77,59 @@ const Dashboard = () => {
     setError('');
 
     try {
-      const res = await axios.post('/chat/', { message: userMessage, context: 'student' },
-        { headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
-      if (res.data.success) setMessages(prev => [...prev, { sender: 'ai', text: res.data.reply }]);
-      else setMessages(prev => [...prev, { sender: 'ai', text: res.data.error || 'Unknown error' }]);
+      // AuthContext already set axios headers globally
+      const res = await axios.post('/chat/', { 
+        message: userMessage, 
+        context: 'student' 
+      });
+      
+      if (res.data.success) {
+        setMessages(prev => [...prev, { 
+          sender: 'ai', 
+          text: res.data.reply,
+          time: new Date().toISOString()
+        }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          sender: 'ai', 
+          text: res.data.error || 'Unknown error',
+          time: new Date().toISOString()
+        }]);
+      }
     } catch (err) {
+      console.error('Send message error:', err);
+      
       let msg = '⚠️ Could not connect to server.';
-      if (err.response) msg = `Server error: ${err.response.status}`;
-      else if (err.request) msg = 'No response from server.';
-      setMessages(prev => [...prev, { sender: 'ai', text: msg }]);
+      if (err.response?.status === 401) {
+        msg = 'Session expired. Please refresh the page and login again.';
+      } else if (err.response) {
+        msg = `Server error: ${err.response.status} - ${err.response.data?.error || ''}`;
+      } else if (err.request) {
+        msg = 'No response from server. Backend may be offline.';
+      }
+      
+      setMessages(prev => [...prev, { 
+        sender: 'ai', 
+        text: msg,
+        time: new Date().toISOString()
+      }]);
       setError(msg);
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  const handleKeyPress = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
-  const clearChat = () => { if (window.confirm('Clear all messages?')) setMessages([]); };
+  const handleKeyPress = e => { 
+    if (e.key === 'Enter' && !e.shiftKey) { 
+      e.preventDefault(); 
+      sendMessage(); 
+    } 
+  };
+  
+  const clearChat = () => { 
+    if (window.confirm('Clear all messages?')) setMessages([]); 
+  };
+  
   const reloadChat = () => loadChatHistory();
 
   const quickActions = [
@@ -96,7 +139,9 @@ const Dashboard = () => {
     { label: 'Features', text: 'What features does Thinkora have?', emoji: '🤔' },
   ];
 
-  if (!user) return <Loader message="Loading your dashboard..." />;
+  if (!user) {
+    return <Loader message="Loading your dashboard..." />;
+  }
 
   return (
     <div className="dashboard-container">
@@ -105,46 +150,92 @@ const Dashboard = () => {
       {/* Mobile Tabs */}
       {isMobile && (
         <div className="mobile-tabs">
-          <button className={activeTab === 'chat' ? 'active' : ''} onClick={() => setActiveTab('chat')}>💬 Chat</button>
-          <button className={activeTab === 'tools' ? 'active' : ''} onClick={() => setActiveTab('tools')}>🛠️ Tools</button>
+          <button 
+            className={activeTab === 'chat' ? 'active' : ''} 
+            onClick={() => setActiveTab('chat')}
+          >
+            💬 Chat
+          </button>
+          <button 
+            className={activeTab === 'tools' ? 'active' : ''} 
+            onClick={() => setActiveTab('tools')}
+          >
+            🛠️ Tools
+          </button>
         </div>
       )}
 
       <div className="dashboard-main">
-
         {/* Error Alert */}
-        {error && <div className="dashboard-error">{error} <button onClick={() => setError('')}>×</button></div>}
+        {error && (
+          <div className="dashboard-error">
+            {error} 
+            <button onClick={() => setError('')}>×</button>
+          </div>
+        )}
 
         {/* Desktop Layout */}
         {!isMobile ? (
           <div className="dashboard-desktop">
-
             {/* Chat Section */}
             <div className="chat-section">
               <div className="chat-header">
                 💬 AI Assistant
-                <button onClick={clearChat}>Clear Chat</button>
+                <div className="chat-header-actions">
+                  <button onClick={reloadChat}>🔄 Reload</button>
+                  <button onClick={clearChat}>🗑️ Clear</button>
+                </div>
               </div>
+              
               <div className="chat-messages">
-                {isLoadingHistory ? <Loader message="Loading chat history..." />
-                  : messages.length === 0 ? (
-                    <div style={{ textAlign: 'center' }}>Welcome to Thinkora, {user.username}!</div>
-                  ) : (
-                    messages.map((msg, idx) => (
-                      <div key={idx} className={`chat-message ${msg.sender}`}>
-                        <div className="bubble">{msg.text}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '4px' }}>
-                          {msg.sender === 'user' ? 'You' : 'Thinkora AI'}
-                        </div>
+                {isLoadingHistory ? (
+                  <Loader message="Loading chat history..." />
+                ) : messages.length === 0 ? (
+                  <div className="empty-chat-state">
+                    <h3>Welcome to Thinkora, {user.username}! 👋</h3>
+                    <p>Start a conversation with the AI assistant or try a quick action:</p>
+                    <div className="quick-actions">
+                      {quickActions.map((action, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setInput(action.text);
+                          }}
+                        >
+                          {action.emoji} {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  messages.map((msg, idx) => (
+                    <div key={idx} className={`chat-message ${msg.sender}`}>
+                      <div className="bubble">{msg.text}</div>
+                      <div className="bubble-info">
+                        {msg.sender === 'user' ? 'You' : 'Thinkora AI'} • {new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
-                    ))
-                  )}
+                    </div>
+                  ))
+                )}
                 <div ref={messagesEndRef} />
                 {loading && <Loader message="Thinking..." />}
               </div>
+              
               <div className="chat-input">
-                <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." disabled={loading}/>
-                <button onClick={sendMessage} disabled={loading || !input.trim()}>Send</button>
+                <input 
+                  type="text" 
+                  value={input} 
+                  onChange={e => setInput(e.target.value)} 
+                  onKeyPress={handleKeyPress} 
+                  placeholder="Type your message..." 
+                  disabled={loading}
+                />
+                <button 
+                  onClick={sendMessage} 
+                  disabled={loading || !input.trim()}
+                >
+                  {loading ? 'Sending...' : 'Send'}
+                </button>
               </div>
             </div>
 
@@ -153,17 +244,22 @@ const Dashboard = () => {
               <div className="card">
                 <h3>🛠️ Tools & Features</h3>
                 <div className="tools-grid">
-                  <button onClick={() => setIsCalculating(!isCalculating)}>📊 GPA Calculator</button>
-                  <button onClick={() => { setInput("What AI features do you have?"); }}> 🤖 AI Features</button>
+                  <button onClick={() => setIsCalculating(!isCalculating)}>
+                    📊 GPA Calculator
+                  </button>
+                  <button onClick={() => { setInput("What AI features do you have?"); }}>
+                    🤖 AI Features
+                  </button>
                 </div>
                 {isCalculating && <GpaCalculator onHide={() => setIsCalculating(false)} />}
               </div>
+              
               <div className="card">
                 <h4>📊 System Status</h4>
-                <div>Backend: 🟢 Online</div>
-                <div>Messages: {messages.length}</div>
-                <div>GPA Scale: 5.00</div>
-                <div>User: {user.username}</div>
+                <div><strong>Backend:</strong> {error ? '🔴 Offline' : '🟢 Online'}</div>
+                <div><strong>Messages:</strong> {messages.length}</div>
+                <div><strong>GPA Scale:</strong> 5.00</div>
+                <div><strong>User:</strong> {user.username}</div>
               </div>
             </div>
           </div>
@@ -171,7 +267,7 @@ const Dashboard = () => {
           /* Mobile Layout */
           <>
             {activeTab === 'chat' && (
-              <div className="chat-section">
+              <div className="chat-section active">
                 <div className="chat-messages">
                   {messages.map((msg, idx) => (
                     <div key={idx} className={`chat-message ${msg.sender}`}>
@@ -179,19 +275,52 @@ const Dashboard = () => {
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
+                  {loading && <Loader message="Thinking..." />}
                 </div>
                 <div className="chat-input">
-                  <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type message..."/>
-                  <button onClick={sendMessage} disabled={loading || !input.trim()}>Send</button>
+                  <input 
+                    type="text" 
+                    value={input} 
+                    onChange={e => setInput(e.target.value)} 
+                    onKeyPress={handleKeyPress} 
+                    placeholder="Type message..."
+                    disabled={loading}
+                  />
+                  <button 
+                    onClick={sendMessage} 
+                    disabled={loading || !input.trim()}
+                  >
+                    {loading ? '...' : 'Send'}
+                  </button>
                 </div>
               </div>
             )}
+            
             {activeTab === 'tools' && (
-              <div className="tools-section">
+              <div className="tools-section active">
                 <div className="card">
                   <h3>📊 GPA Calculator</h3>
-                  <button onClick={() => setIsCalculating(!isCalculating)}>{isCalculating ? 'Close' : 'Open'}</button>
+                  <button onClick={() => setIsCalculating(!isCalculating)}>
+                    {isCalculating ? 'Close' : 'Open Calculator'}
+                  </button>
                   {isCalculating && <GpaCalculator onHide={() => setIsCalculating(false)} />}
+                </div>
+                
+                <div className="card">
+                  <h4>Quick Actions</h4>
+                  <div className="quick-actions">
+                    {quickActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setInput(action.text);
+                          setActiveTab('chat'); // Switch to chat tab
+                        }}
+                      >
+                        {action.emoji} {action.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
