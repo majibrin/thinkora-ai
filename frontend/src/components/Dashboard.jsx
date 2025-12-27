@@ -6,6 +6,7 @@ import GpaCalculator from './GpaCalculator';
 import Loader from './Loader';
 import axios from 'axios';
 import './Dashboard.css';
+import './GpaCalculator.css';
 
 const Dashboard = () => {
   const { user, logout } = useAuth(); // Removed token - not needed
@@ -25,6 +26,37 @@ const Dashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Add this to your Dashboard.jsx component
+useEffect(() => {
+  // Fix for mobile viewport height (address bar issue)
+  const setVh = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+
+  // Set on load and resize
+  setVh();
+  window.addEventListener('resize', setVh);
+  window.addEventListener('orientationchange', setVh);
+
+  // Handle visual viewport changes (mobile keyboards)
+  if (window.visualViewport) {
+    const handleResize = () => {
+      setTimeout(setVh, 100); // Small delay for iOS
+    };
+    window.visualViewport.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.visualViewport.removeEventListener('resize', handleResize);
+    };
+  }
+
+  return () => {
+    window.removeEventListener('resize', setVh);
+    window.removeEventListener('orientationchange', setVh);
+  };
+}, []);
 
   // Load chat history - FIXED: No manual headers
   const loadChatHistory = async () => {
@@ -189,7 +221,7 @@ const Dashboard = () => {
               
               <div className="chat-messages">
                 {isLoadingHistory ? (
-                  <Loader message="Loading chat history..." />
+                  <Loader message="Loading chat history..." variant="small" />
                 ) : messages.length === 0 ? (
                   <div className="empty-chat-state">
                     <h3>Welcome to Thinkora, {user.username}! 👋</h3>
@@ -218,7 +250,7 @@ const Dashboard = () => {
                   ))
                 )}
                 <div ref={messagesEndRef} />
-                {loading && <Loader message="Thinking..." />}
+                {loading && <Loader message="Thinking..." variant="inline" showProgress={false} />}
               </div>
               
               <div className="chat-input">

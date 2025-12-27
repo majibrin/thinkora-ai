@@ -365,3 +365,93 @@
     font-size: 0.8rem;
   }
 }
+
+
+/* Add these styles to your existing GpaCalculator.css */
+
+/* Loading state for calculate button */
+.gpa-calc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.gpa-loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Disabled states */
+.gpa-container input:disabled,
+.gpa-container select:disabled,
+.gpa-container button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Button loading states */
+.main-calc-btn:disabled {
+  background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+}
+
+.add-btn:disabled {
+  background: #e9ecef !important;
+  color: #adb5bd !important;
+  border-color: #dee2e6 !important;
+  cursor: not-allowed;
+}
+
+.del-btn:disabled {
+  background: #f8f9fa !important;
+  color: #ced4da !important;
+  border-color: #e9ecef !important;
+  cursor: not-allowed;
+}
+
+/* Mode tabs disabled */
+.mode-tabs button:disabled {
+  opacity: 0.5;
+}
+
+/* Error message styling */
+.gpa-error {
+  background: #fff5f5;
+  color: #dc3545;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border-left: 4px solid #dc3545;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Result box animation */
+.gpa-result-box {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gpa-container {
+    max-height: 70vh;
+  }
+  
+  .gpa-scroll-area {
+    max-height: 40vh;
+  }
+}

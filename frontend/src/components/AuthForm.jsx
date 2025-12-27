@@ -1,17 +1,20 @@
+// src/components/AuthForm.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Loader from './Loader';
 import './AuthForm.css';
-import loader from '../assets/loader.png';
+import logoImage from '../assets/loader.png';
+
 const AuthForm = () => {
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ 
-    email: '', 
-    username: '', 
-    password: '' 
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +29,7 @@ const AuthForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
+
     // Check password strength on password change
     if (name === 'password' && !isLogin) {
       const strength = {
@@ -47,25 +50,25 @@ const AuthForm = () => {
 
     try {
       if (isLogin) {
-        await login({ 
-          email: formData.email, 
-          password: formData.password 
+        await login({
+          email: formData.email,
+          password: formData.password
         });
       } else {
-        await register({ 
-          username: formData.username, 
-          email: formData.email, 
-          password: formData.password 
+        await register({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
         });
       }
       navigate('/');
     } catch (err) {
       console.error('Auth error:', err);
-      const errorMessage = 
-        err.response?.data?.detail || 
-        err.response?.data?.error || 
-        err.response?.data?.message || 
-        err.message || 
+      const errorMessage =
+        err.response?.data?.detail ||
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
         'An error occurred. Please try again.';
       setError(errorMessage);
     } finally {
@@ -75,7 +78,7 @@ const AuthForm = () => {
 
   const renderPasswordRequirements = () => {
     if (isLogin) return null;
-    
+
     return (
       <div className="password-requirements">
         <p>Password must contain:</p>
@@ -100,19 +103,24 @@ const AuthForm = () => {
     );
   };
 
+  // Show full-page loader when loading
+  if (loading) {
+    return <Loader message={isLogin ? "Logging you in..." : "Creating your account..."} />;
+  }
+
   return (
     <div className="auth-container" role="main" aria-label="Authentication">
       <div className="auth-card">
-        <img 
-          src={loader} 
-          alt="Thinkora Logo" 
+        <img
+          src={logoImage}
+          alt="Thinkora Logo"
           className="auth-logo"
         />
         <h1>{isLogin ? 'Welcome Back' : 'Create Account'}</h1>
-        
+
         {error && (
-          <div 
-            className="auth-error" 
+          <div
+            className="auth-error"
             role="alert"
             aria-live="assertive"
           >
@@ -132,7 +140,7 @@ const AuthForm = () => {
             aria-label="Email address"
             disabled={loading}
           />
-          
+
           {!isLogin && (
             <input
               type="text"
@@ -147,7 +155,7 @@ const AuthForm = () => {
               disabled={loading}
             />
           )}
-          
+
           <input
             type="password"
             name="password"
@@ -160,22 +168,15 @@ const AuthForm = () => {
             aria-label="Password"
             disabled={loading}
           />
-          
+
           {renderPasswordRequirements()}
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             disabled={loading}
             aria-busy={loading}
           >
-            {loading ? (
-              <>
-                <span className="loading-spinner" aria-hidden="true"></span>
-                <span>{isLogin ? 'Logging in...' : 'Creating account...'}</span>
-              </>
-            ) : (
-              <span>{isLogin ? 'Login' : 'Sign Up'}</span>
-            )}
+            {isLogin ? 'Login' : 'Sign Up'}
           </button>
         </form>
 

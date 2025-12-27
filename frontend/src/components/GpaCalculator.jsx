@@ -1,6 +1,4 @@
 // src/components/GpaCalculator.jsx
-// Add this import at the top of GpaCalculator.jsx
-import './GpaCalculator.css';
 import React, { useState } from 'react';
 import {
   Plus,
@@ -9,7 +7,8 @@ import {
   RotateCcw,
   X,
   GraduationCap,
-  BookOpen
+  BookOpen,
+  Loader as LoaderIcon
 } from 'lucide-react';
 import './GpaCalculator.css';
 
@@ -73,20 +72,35 @@ function GpaCalculator({ onHide }) {
     setSemesters([{ gpa: '', credits: '', id: Date.now() }]);
     setResult(null);
     setError('');
+    setLoading(false);
   };
 
   return (
     <div className="gpa-container">
       <div className="gpa-header">
         <div className="mode-tabs">
-          <button className={calcMode === 'GPA' ? 'active' : ''} onClick={() => { setCalcMode('GPA'); setResult(null); }}>
+          <button 
+            className={calcMode === 'GPA' ? 'active' : ''} 
+            onClick={() => { setCalcMode('GPA'); setResult(null); }}
+            disabled={loading}
+          >
             <BookOpen size={14} style={{ marginRight: '6px' }} /> GPA
           </button>
-          <button className={calcMode === 'CGPA' ? 'active' : ''} onClick={() => { setCalcMode('CGPA'); setResult(null); }}>
+          <button 
+            className={calcMode === 'CGPA' ? 'active' : ''} 
+            onClick={() => { setCalcMode('CGPA'); setResult(null); }}
+            disabled={loading}
+          >
             <GraduationCap size={14} style={{ marginRight: '6px' }} /> CGPA
           </button>
         </div>
-        <button className="close-x" onClick={onHide}><X size={20} /></button>
+        <button 
+          className="close-x" 
+          onClick={onHide}
+          disabled={loading}
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {error && <div className="gpa-error">{error}</div>}
@@ -96,36 +110,106 @@ function GpaCalculator({ onHide }) {
           courses.map((c, idx) => (
             <div key={c.id} className="course-row">
               <span className="row-label">C{idx + 1}</span>
-              <select value={c.grade} onChange={e => updateCourse(c.id, 'grade', e.target.value)}>
+              <select 
+                value={c.grade} 
+                onChange={e => updateCourse(c.id, 'grade', e.target.value)}
+                disabled={loading}
+              >
                 {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
-              <input type="number" min="0" placeholder="Units" value={c.credits} onChange={e => updateCourse(c.id, 'credits', e.target.value)} />
-              <button className="del-btn" onClick={() => removeCourse(c.id)} disabled={courses.length <= 1}><Trash2 size={14} /></button>
+              <input 
+                type="number" 
+                min="0" 
+                placeholder="Units" 
+                value={c.credits} 
+                onChange={e => updateCourse(c.id, 'credits', e.target.value)}
+                disabled={loading}
+              />
+              <button 
+                className="del-btn" 
+                onClick={() => removeCourse(c.id)} 
+                disabled={courses.length <= 1 || loading}
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           ))
         ) : (
           semesters.map((s, idx) => (
             <div key={s.id} className="course-row sem-row">
               <span className="row-label">S{idx + 1}</span>
-              <input type="number" step="0.01" min="0" placeholder="GPA" value={s.gpa} onChange={e => updateSemester(s.id, 'gpa', e.target.value)} />
-              <input type="number" min="0" placeholder="Units" value={s.credits} onChange={e => updateSemester(s.id, 'credits', e.target.value)} />
-              <button className="del-btn" onClick={() => removeSemester(s.id)} disabled={semesters.length <= 1}><Trash2 size={14} /></button>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                placeholder="GPA" 
+                value={s.gpa} 
+                onChange={e => updateSemester(s.id, 'gpa', e.target.value)}
+                disabled={loading}
+              />
+              <input 
+                type="number" 
+                min="0" 
+                placeholder="Units" 
+                value={s.credits} 
+                onChange={e => updateSemester(s.id, 'credits', e.target.value)}
+                disabled={loading}
+              />
+              <button 
+                className="del-btn" 
+                onClick={() => removeSemester(s.id)} 
+                disabled={semesters.length <= 1 || loading}
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           ))
         )}
 
         {calcMode === 'GPA' ? (
-          <button className="add-btn" onClick={addCourse}><Plus size={14} /> Add Course</button>
+          <button 
+            className="add-btn" 
+            onClick={addCourse}
+            disabled={loading}
+          >
+            <Plus size={14} /> Add Course
+          </button>
         ) : (
-          <button className="add-btn" onClick={addSemester}><Plus size={14} /> Add Semester</button>
+          <button 
+            className="add-btn" 
+            onClick={addSemester}
+            disabled={loading}
+          >
+            <Plus size={14} /> Add Semester
+          </button>
         )}
       </div>
 
       <div className="gpa-footer-actions">
-        <button className="main-calc-btn" onClick={handleCalculate} disabled={loading}>
-          <Calculator size={18} style={{ marginRight: '8px' }} /> {loading ? '...' : `Calculate ${calcMode}`}
+        <button 
+          className="main-calc-btn" 
+          onClick={handleCalculate} 
+          disabled={loading}
+        >
+          {loading ? (
+            <div className="gpa-calc-loading">
+              <LoaderIcon size={18} className="gpa-loading-spinner" />
+              <span>Calculating...</span>
+            </div>
+          ) : (
+            <>
+              <Calculator size={18} style={{ marginRight: '8px' }} /> 
+              {`Calculate ${calcMode}`}
+            </>
+          )}
         </button>
-        <button className="reset-btn" onClick={reset}><RotateCcw size={18} /></button>
+        <button 
+          className="reset-btn" 
+          onClick={reset}
+          disabled={loading}
+        >
+          <RotateCcw size={18} />
+        </button>
       </div>
 
       {result && (
