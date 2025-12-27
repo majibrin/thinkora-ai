@@ -1,9 +1,8 @@
-// src/components/Header.jsx - NO CHANGES NEEDED!
-// Your existing code remains 100% identical
+// src/components/Header.jsx - NO CHANGES NEEDED
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import Loader from './Loader';
-import logo from '../assets/logo.png';
+import logo from '../assets/logo.png'; // logo.png = logo WITH text
 import './Header.css';
 
 const Header = () => {
@@ -16,7 +15,11 @@ const Header = () => {
   return (
     <header className="dashboard-header">
       <div className="logo-user">
-        <img src={logo} alt="Thinkora Logo" className="header-logo" />
+        <img 
+          src={logo} 
+          alt="Thinkora Logo" 
+          className="header-logo" 
+        />
         <div className="user-info">
           Welcome, {user.username || user.email}
         </div>
