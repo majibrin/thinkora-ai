@@ -29,7 +29,7 @@
 /* TEXT LOGO - WIDE FORMAT */
 .header-logo {
   width: 160px; /* Wide enough for text logo */
-  height: 40px; /* Reasonable height */
+  height: 60px; /* Reasonable height */
   object-fit: contain; /* Keeps aspect ratio */
   object-position: left center; /* Aligns text to left */
   transition: transform 0.2s ease;
