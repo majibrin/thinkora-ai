@@ -30,7 +30,7 @@ urlpatterns = [
     
     # Maintenance & Health
     path('health/', health_check, name='health_check'),
-    path('setup-admin-secret/', create_superuser, name='create_superuser'),
+    # path('setup-admin-secret/', create_superuser, name='create_superuser'),
     
     # Viewsets
     path('', include(router.urls)),
