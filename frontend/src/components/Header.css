@@ -25,11 +25,14 @@
   align-items: center;
   gap: 20px;
 }
-
+.logo-user img {
+  padding: 0;
+  margin: 0;
+}
 /* TEXT LOGO - WIDE FORMAT */
 .header-logo {
   width: 160px; /* Wide enough for text logo */
-  height: 60px; /* Reasonable height */
+  height: 40px; /* Reasonable height */
   object-fit: contain; /* Keeps aspect ratio */
   object-position: left center; /* Aligns text to left */
   transition: transform 0.2s ease;
@@ -104,6 +107,7 @@
 .header-loader img {
   width: 32px;
   height: 32px;
+  object-fit: cover;
   animation: spin 1s linear infinite;
 }
 
