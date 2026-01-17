@@ -1,4 +1,4 @@
-// src/components/Header.jsx - NO CHANGES NEEDED
+// src/components/Header.jsx
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import Loader from './Loader';
@@ -15,11 +15,7 @@ const Header = () => {
   return (
     <header className="dashboard-header">
       <div className="logo-user">
-        <img 
-          src={logo} 
-          alt="Thinkora Logo" 
-          className="header-logo" 
-        />
+        GPA Calculator
         <div className="user-info">
           Welcome, {user.username || user.email}
         </div>

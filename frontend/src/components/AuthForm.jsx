@@ -107,14 +107,7 @@ const AuthForm = () => {
       <div className="auth-card">
         {/* Logo with improved accessibility */}
         <div className="logo-container">
-          <img
-            src={logoImage}
-            alt="Thinkora Logo"
-            className="auth-logo"
-            width="80"
-            height="80"
-            loading="eager"
-          />
+
           <div className="logo-subtitle">
             {isLogin ? 'Welcome to Thinkora' : 'Join Thinkora'}
           </div>
